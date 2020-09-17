@@ -27,8 +27,8 @@ parser.add_argument("--batch-size", type=int, default=64,
 parser.add_argument("--num-subsets", type=int, default=5,
                             help="number of subsets")
 
-parser.add_argument("--subset_ratio", type=int, default=0.8,
-                            help="number of estimators of XGB")
+parser.add_argument("--subset-ratio", type=float, default=0.8,
+                            help="how much subset ratio for training")
 
 with open('config.json') as config_file:
     config = json.load(config_file)
@@ -129,12 +129,13 @@ for experiment in range(num_experiments):
     test_dict = {model.x_input: mnist.test.all_images,
                 model.y_input: mnist.test.all_labels} 
     test_acc= sess.run(model.accuracy, feed_dict=test_dict)
-    test_accs[experiment] = '{:.4}%'.format(test_acc  * 100)
+    test_accs[experiment] = test_acc  * 100
     avg_test_acc += test_acc
 
 avg_test_acc  = avg_test_acc/num_experiments
-print('  average testing accuracy {:.4}%'.format(avg_test_acc  * 100))
+print('  average testing accuracy {:.4}'.format(avg_test_acc  * 100))
 print('  individual accuracies: \n', test_accs)
+print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
 
 
 
