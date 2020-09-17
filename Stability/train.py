@@ -17,8 +17,25 @@ import numpy as np
 import data
 from NN_model import Model
 
+import argparse
+
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+parser.add_argument("--batch-size", type=int, default=64,
+                            help="batch size")
+
+parser.add_argument("--num-subsets", type=int, default=5,
+                            help="number of subsets")
+
+parser.add_argument("--subset_ratio", type=int, default=0.8,
+                            help="number of estimators of XGB")
+
 with open('config.json') as config_file:
     config = json.load(config_file)
+
+
+args = parser.parse_args()
+print(args)
 
 # Setting up training parameters
 tf.set_random_seed(config['random_seed'])
@@ -26,9 +43,12 @@ max_num_training_steps = config['max_num_training_steps']
 num_output_steps = config['num_output_steps']
 num_summary_steps = config['num_summary_steps']
 num_checkpoint_steps = config['num_checkpoint_steps']
-batch_size = config['batch_size']
-num_subsets= config['num_subsets']
-subset_ratio = config['subset_ratio']
+#batch_size = config['batch_size']
+batch_size = args.batch_size
+#num_subsets= config['num_subsets']
+num_subsets = args.num_subsets
+#subset_ratio = config['subset_ratio']
+subset_ratio = args.subset_ratio
 subset_batch_size = int(batch_size/num_subsets)
 initial_learning_rate = config['initial_learning_rate']
 eta = config['constant_learning_rate']
@@ -110,12 +130,11 @@ for experiment in range(num_experiments):
                 model.y_input: mnist.test.all_labels} 
     test_acc= sess.run(model.accuracy, feed_dict=test_dict)
     test_accs[experiment] = '{:.4}%'.format(test_acc  * 100)
-    avg_test_acc +=test_acc
+    avg_test_acc += test_acc
 
 avg_test_acc  = avg_test_acc/num_experiments
 print('  average testing accuracy {:.4}%'.format(avg_test_acc  * 100))
-print('  individual accuracies:')
-print(test_accs)
-  
+print('  individual accuracies: \n', test_accs)
+
 
 
