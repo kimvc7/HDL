@@ -62,15 +62,18 @@ model = Model(num_subsets, subset_batch_size)
 # Setting up the optimizer
 
 #CONSTANC STEP SIZE
-#optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent, global_step=global_step)
+if num_subsets > 1:
+    optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent, global_step=global_step)
 #DECREASING STEP SIZE
-optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
+else:
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
 
 avg_test_acc = 0
 test_accs = {}
 num_experiments = config['num_experiments']
 
 for experiment in range(num_experiments):
+  print("Experiment", experiment)
   # Setting up the Tensorboard and checkpoint outputs
   model_dir = config['model_dir'] + str(datetime.now())
   if not os.path.exists(model_dir):
