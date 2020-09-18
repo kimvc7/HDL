@@ -10,3 +10,10 @@ To use the code go to ```Sparsity```:
 Then ```python train.py --subset-ratio 0.8 --num-subsets 5 --batch-size 64```
 
 You can choose these parameters directly from the command line and have more modularity in the config file, but these 3 parameters are the most important a priori.
+
+TODO:
+
+- Get the performance on validation set every 500 updates or so.
+
+- Code the std of the weights using the 10 last logits. Be careful, one std per logit per XX seeds, then averaged the size of test set.
+
