@@ -64,9 +64,11 @@ model = Model(num_subsets, subset_batch_size)
 #CONSTANC STEP SIZE
 if num_subsets > 1:
     optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent, global_step=global_step)
+    #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.max_xent, global_step=global_step)
 #DECREASING STEP SIZE
 else:
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
+    #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
+    optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step)
 
 avg_test_acc = 0
 test_accs = {}
