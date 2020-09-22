@@ -1,0 +1,17 @@
+{
+  "_comment": "===== MODEL CONFIGURATION =====",
+  "model_dir": "results/models",
+
+  "_comment": "===== TRAINING CONFIGURATION =====",
+  "random_seed": 4557077,
+  "max_num_training_steps": 40000,
+  "num_output_steps": 9999,
+  "num_summary_steps": 100,
+  "num_checkpoint_steps": 300,
+  "subset_ratio": 0.8,
+  "training_size": 50000,
+  "batch_size": 64,
+  "initial_learning_rate": 1e-3,
+  "constant_learning_rate": 1e-4,
+  "num_experiments": 10
+}
