@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
                             help="batch range")
 
-parser.add_argument("--ratio_range", type=int, nargs='+', default=[0.7, 0.8],
+parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.7, 0.8],
                             help="ratio range")
 
 parser.add_argument("--stable", type=int, default=1,
@@ -181,7 +181,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   std = np.array([float(test_accs[k]) for k in test_accs]).std()
   print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
 
-  file = open('resultsCIFAR.csv', 'a+', newline ='') 
+  file = open(str('results' + data_set + '.csv'), 'a+', newline ='') 
   with file:
     writer = csv.writer(file) 
     writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations])
