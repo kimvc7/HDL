@@ -95,8 +95,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   iterations = {}
   num_experiments = config['num_experiments']
   logits_acc = np.zeros((config['num_experiments'], 10000, 10))
-  W1_acc = np.zeros((config['num_experiments'], 10000, 512))
-  W2_acc = np.zeros((config['num_experiments'], 10000, 256))
+  W1_acc = np.zeros((config['num_experiments'], 10000, 784*512))
+  W2_acc = np.zeros((config['num_experiments'], 10000, 512*256))
 
   for experiment in range(num_experiments):
     print("Experiment", experiment)
@@ -175,8 +175,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       test_accs[experiment] = test_acc  * 100
       thetas[experiment] = theta
       logits_acc[experiment] = sess.run(model.logits, feed_dict=test_dict)
-      W1_acc[experiment] = sess.run(model.W1, feed_dict=test_dict)
-      W2_acc[experiment] = sess.run(model.W2, feed_dict=test_dict)
+      W1_acc[experiment] = sess.run(model.W1, feed_dict=test_dict).reshape(-1, 784*512)
+      W2_acc[experiment] = sess.run(model.W2, feed_dict=test_dict).reshape(-1, 512*256)
       iterations[experiment] = num_iters
       avg_test_acc += test_acc
 
