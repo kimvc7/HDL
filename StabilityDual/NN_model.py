@@ -13,16 +13,16 @@ import json
 
 
 class Model(object):
-  def __init__(self, subset_ratio):
+  def __init__(self, subset_ratio, num_features):
     self.subset_ratio = subset_ratio
-    self.x_input = tf.placeholder(tf.float32, shape = [None, 784])
+    self.x_input = tf.placeholder(tf.float32, shape = [None, num_features])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
 
     # Stability dual variable
-    self.theta = tf.Variable(tf.constant(0.0))
+    self.theta = tf.Variable(tf.constant(1.0))
 
     # Perceptron's fully connected layer.
-    self.W1 = self._weight_variable([784, 512])
+    self.W1 = self._weight_variable([num_features, 512])
     self.b1 = self._bias_variable([512])
     self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
 

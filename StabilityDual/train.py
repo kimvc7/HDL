@@ -14,7 +14,7 @@ from timeit import default_timer as timer
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
-import data
+import input_data
 from NN_model import Model
 import csv
 import itertools
@@ -24,13 +24,16 @@ import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument("--batch_range", type=int, nargs='+', default=[32, 64],
+parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
                             help="batch range")
 
 parser.add_argument("--ratio_range", type=int, nargs='+', default=[0.7, 0.8],
                             help="ratio range")
 
 parser.add_argument("--stable", type=int, default=1,
+                            help="number of subsets")
+
+parser.add_argument("--data_set", type=str, default="mnist",
                             help="number of subsets")
 
 with open('config.json') as config_file:
@@ -47,7 +50,7 @@ num_output_steps = config['num_output_steps']
 num_summary_steps = config['num_summary_steps']
 num_checkpoint_steps = config['num_checkpoint_steps']
 training_size = config['training_size']
-#batch_size = args.batch_size
+data_set = args.data_set
 batch_range = args.batch_range
 ratio_range = args.ratio_range
 stable = args.stable
@@ -56,17 +59,21 @@ eta = config['constant_learning_rate']
 learning_rate = tf.train.exponential_decay(initial_learning_rate, 0, 5, 0.85, staircase=True)
 
 # Setting up the data and the model
-mnist = data.load_mnist_data_set(validation_size= (60000 - training_size))
+if data_set == "mnist":
+  data = input_data.load_mnist_data_set(validation_size= (60000 - training_size))
+if data_set == "cifar":
+  data = input_data.load_cifar_data_set(validation_size= (60000 - training_size))
 global_step = tf.Variable(1, name="global_step")
+num_features = data.train._images.shape[1]
 
 
 for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Parameters chosen with validation
   print(batch_size, subset_ratio)
-  model = Model(subset_ratio)
-  val_dict = {model.x_input: mnist.validation._images,
-                  model.y_input: mnist.validation._labels}
-  test_dict = {model.x_input: mnist.test._images,
-                  model.y_input: mnist.test._labels}
+  model = Model(subset_ratio, num_features)
+  val_dict = {model.x_input: data.validation._images,
+                  model.y_input: data.validation._labels}
+  test_dict = {model.x_input: data.test._images,
+                  model.y_input: data.test._labels}
 
   # Setting up the optimizer
   if stable:
@@ -76,7 +83,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
 
   else:
-      var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
+      var_list = [model.W1, model.b1, model.W3, model.b3]
       #CONSTANC STEP SIZE
       optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step, var_list=var_list)
       #DECREASING STEP SIZE
@@ -110,7 +117,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       test_acc = 0
       num_iters = 0
       for ii in range(max_num_training_steps):
-        x_batch, y_batch = mnist.train.next_batch(batch_size)
+        x_batch, y_batch = data.train.next_batch(batch_size)
 
         nat_dict = {model.x_input: x_batch,
                     model.y_input: y_batch}
@@ -174,7 +181,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   std = np.array([float(test_accs[k]) for k in test_accs]).std()
   print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
 
-  file = open('results.csv', 'a+', newline ='') 
+  file = open('resultsCIFAR.csv', 'a+', newline ='') 
   with file:
     writer = csv.writer(file) 
     writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations])
