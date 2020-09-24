@@ -4,7 +4,7 @@
 
   "_comment": "===== TRAINING CONFIGURATION =====",
   "random_seed": 4557077,
-  "max_num_training_steps": 40000,
+  "max_num_training_steps": 100000,
   "num_output_steps": 9999,
   "num_summary_steps": 100,
   "num_checkpoint_steps": 300,
