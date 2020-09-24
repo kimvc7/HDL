@@ -157,11 +157,12 @@ def load_mnist_data_set(num_subsets, subset_ratio, validation_size, reshape=True
 def load_data_set(num_subsets, subset_ratio, validation_size, cifar, reshape=True, dtype=dtypes.float32):
   if cifar:
     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
-    X_train = X_train[:,:,:,0]
-    X_test = X_test[:, :, :, 0]
+    X_train = X_train[:,:,:, 0]#.reshape(-1, 32*3, 32*3)
+    X_test = X_test[:, :, :, 0]#.reshape(-1, 32*3, 32*3)
+    y_train = y_train.reshape(-1)
+    y_test = y_test.reshape(-1)
   else:
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
-
   X_val = X_train[:validation_size]
   y_val = y_train[:validation_size]
   X_train = X_train[validation_size:]

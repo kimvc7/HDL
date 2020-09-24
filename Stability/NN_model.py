@@ -13,14 +13,14 @@ import json
 
 
 class Model(object):
-  def __init__(self, num_subsets, subset_batch_size):
-    self.x_input = tf.placeholder(tf.float32, shape = [None, 784])
+  def __init__(self, num_subsets, subset_batch_size, input_size):
+    self.x_input = tf.placeholder(tf.float32, shape = [None, input_size])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
 
     N = tf.shape(self.x_input)[0]
 
     # Perceptron's fully connected layer.
-    self.W1 = self._weight_variable([784, 512])
+    self.W1 = self._weight_variable([input_size, 512])
     self.b1 = self._bias_variable([512])
     self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
 

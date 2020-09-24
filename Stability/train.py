@@ -39,6 +39,10 @@ with open('config.json') as config_file:
 
 args = parser.parse_args()
 print(args)
+if args.cifar:
+    input_size = 32*32
+else:
+    input_size = 784
 
 # Setting up training parameters
 tf.set_random_seed(config['random_seed'])
@@ -61,7 +65,7 @@ learning_rate = tf.train.exponential_decay(initial_learning_rate, 0, 5, 0.85, st
 #mnist = data.load_mnist_data_set(num_subsets, subset_ratio, validation_size=10000)
 mnist = data.load_data_set(num_subsets, subset_ratio, validation_size=10000, cifar = args.cifar)
 global_step = tf.Variable(1, name="global_step")
-model = Model(num_subsets, subset_batch_size)
+model = Model(num_subsets, subset_batch_size, input_size)
 
 # Setting up the optimizer
 
@@ -150,7 +154,7 @@ avg_test_acc  = avg_test_acc/num_experiments
 print('  average testing accuracy {:.4}'.format(avg_test_acc  * 100))
 print('  individual accuracies: \n', test_accs)
 print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
-print(logits_acc[:,:3])
+#print(logits_acc[:,:3])
 print(np.mean(np.std(logits_acc, axis = 0), axis = 0))
 
 
