@@ -15,7 +15,8 @@ You can choose these parameters directly from the command line and have more mod
 To use the code for dual Stability:
 1) Go to ```StabilityDual```.
 
-2) Then ```python train.py --subset-ratio 0.8 --batch-size 64 --stable=1```
+2) Then ```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --stable=1 --data_set=cifar``` for stability or
+```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --stable=0 --data_set=cifar``` for no stability.
 
 
 TODO:
