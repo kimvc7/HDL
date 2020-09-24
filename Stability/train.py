@@ -70,9 +70,12 @@ else:
     #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
     optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step)
 
+num_experiments = config['num_experiments']
 avg_test_acc = 0
 test_accs = {}
-num_experiments = config['num_experiments']
+#size num_experiments * test set size * 10 logits
+logits_acc = np.zeros((num_experiments, 10000, 10))
+
 
 for experiment in range(num_experiments):
   print("Experiment", experiment)
@@ -133,7 +136,8 @@ for experiment in range(num_experiments):
     #Output test results
     test_dict = {model.x_input: mnist.test.all_images,
                 model.y_input: mnist.test.all_labels} 
-    test_acc= sess.run(model.accuracy, feed_dict=test_dict)
+    test_acc = sess.run(model.accuracy, feed_dict=test_dict)
+    logits_acc[experiment] = sess.run(model.pre_softmax, feed_dict=test_dict)
     test_accs[experiment] = test_acc  * 100
     avg_test_acc += test_acc
 
@@ -141,6 +145,8 @@ avg_test_acc  = avg_test_acc/num_experiments
 print('  average testing accuracy {:.4}'.format(avg_test_acc  * 100))
 print('  individual accuracies: \n', test_accs)
 print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
+
+print(np.mean(np.std(logits_acc, axis = 0), axis = 0))
 
 
 

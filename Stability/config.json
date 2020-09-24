@@ -13,5 +13,5 @@
   "batch_size": 64,
   "initial_learning_rate": 1e-3,
   "constant_learning_rate": 1e-4,
-  "num_experiments": 10
+  "num_experiments": 20
 }
