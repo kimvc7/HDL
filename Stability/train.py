@@ -30,6 +30,9 @@ parser.add_argument("--num-subsets", type=int, default=5,
 parser.add_argument("--subset-ratio", type=float, default=0.8,
                             help="how much subset ratio for training")
 
+parser.add_argument("--cifar", action="store_true",
+                            help="how much subset ratio for training")
+
 with open('config.json') as config_file:
     config = json.load(config_file)
 
@@ -55,7 +58,8 @@ eta = config['constant_learning_rate']
 learning_rate = tf.train.exponential_decay(initial_learning_rate, 0, 5, 0.85, staircase=True)
 
 # Setting up the data and the model
-mnist = data.load_mnist_data_set(num_subsets, subset_ratio, validation_size=10000)
+#mnist = data.load_mnist_data_set(num_subsets, subset_ratio, validation_size=10000)
+mnist = data.load_data_set(num_subsets, subset_ratio, validation_size=10000, cifar = args.cifar)
 global_step = tf.Variable(1, name="global_step")
 model = Model(num_subsets, subset_batch_size)
 
@@ -137,7 +141,8 @@ for experiment in range(num_experiments):
     test_dict = {model.x_input: mnist.test.all_images,
                 model.y_input: mnist.test.all_labels} 
     test_acc = sess.run(model.accuracy, feed_dict=test_dict)
-    logits_acc[experiment] = sess.run(model.pre_softmax, feed_dict=test_dict)
+    #logits_acc[experiment] = sess.run(model.pre_softmax, feed_dict=test_dict)
+    logits_acc[experiment] = sess.run(model.logits, feed_dict=test_dict)
     test_accs[experiment] = test_acc  * 100
     avg_test_acc += test_acc
 
@@ -145,7 +150,7 @@ avg_test_acc  = avg_test_acc/num_experiments
 print('  average testing accuracy {:.4}'.format(avg_test_acc  * 100))
 print('  individual accuracies: \n', test_accs)
 print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
-
+print(logits_acc[:,:3])
 print(np.mean(np.std(logits_acc, axis = 0), axis = 0))
 
 

@@ -35,6 +35,7 @@ class Model(object):
     #Prediction 
     y_xent = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=self.y_input, logits=self.pre_softmax)
+    self.logits = tf.nn.softmax(self.pre_softmax)
     self.xent = tf.reduce_sum(y_xent)
     self.y_pred = tf.argmax(self.pre_softmax, 1)
 
