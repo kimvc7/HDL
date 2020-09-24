@@ -94,6 +94,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   thetas = {}
   iterations = {}
   num_experiments = config['num_experiments']
+  logits_acc = np.zeros((config['num_experiments'], 10000, 10))
+  W1_acc = np.zeros((config['num_experiments'], 10000, 512))
+  W2_acc = np.zeros((config['num_experiments'], 10000, 256))
 
   for experiment in range(num_experiments):
     print("Experiment", experiment)
@@ -171,6 +174,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       theta= sess.run(model.theta, feed_dict=test_dict)
       test_accs[experiment] = test_acc  * 100
       thetas[experiment] = theta
+      logits_acc[experiment] = sess.run(model.logits, feed_dict=test_dict)
+      W1_acc[experiment] = sess.run(model.W1, feed_dict=test_dict)
+      W2_acc[experiment] = sess.run(model.W2, feed_dict=test_dict)
       iterations[experiment] = num_iters
       avg_test_acc += test_acc
 
@@ -180,8 +186,11 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   print('  individual accuracies: \n', test_accs)
   std = np.array([float(test_accs[k]) for k in test_accs]).std()
   print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
+  print("Logits stability", np.mean(np.std(logits_acc, axis=0), axis=0))
+  print("W1 stability", np.mean(np.std(W1_acc, axis=0), axis=0))
+  print("W2 stability", np.mean(np.std(W2_acc, axis=0), axis=0))
 
-  file = open(str('results' + data_set + '.csv'), 'a+', newline ='') 
+  file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
   with file:
     writer = csv.writer(file) 
     writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations])
