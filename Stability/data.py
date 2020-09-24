@@ -153,3 +153,24 @@ def load_mnist_data_set(num_subsets, subset_ratio, validation_size, reshape=True
   test = _DataSet(X_test, y_test, **options)
 
   return _Datasets(train=train, validation=validation, test=test)
+
+def load_data_set(num_subsets, subset_ratio, validation_size, cifar, reshape=True, dtype=dtypes.float32):
+  if cifar:
+    (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+    X_train = X_train[:,:,:,0]
+    X_test = X_test[:, :, :, 0]
+  else:
+    (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+
+  X_val = X_train[:validation_size]
+  y_val = y_train[:validation_size]
+  X_train = X_train[validation_size:]
+  y_train = y_train[validation_size:]
+
+  options = dict(dtype=dtype, reshape=reshape, num_subsets=num_subsets, subset_ratio=subset_ratio)
+
+  train = _DataSet(X_train, y_train, **options )
+  validation = _DataSet(X_val, y_val, **options)
+  test = _DataSet(X_test, y_test, **options)
+
+  return _Datasets(train=train, validation=validation, test=test)
