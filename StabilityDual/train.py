@@ -24,10 +24,10 @@ import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
+parser.add_argument("--batch_range", type=int, nargs='+', default=[64, 256],
                             help="batch range")
 
-parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.7, 0.8],
+parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.8],
                             help="ratio range")
 
 parser.add_argument("--stable", type=int, default=1,
@@ -181,17 +181,17 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       avg_test_acc += test_acc
 
   avg_test_acc  = avg_test_acc/num_experiments
-  print('  average testing accuracy {:.4}'.format(avg_test_acc  * 100))
+  print('  Average testing accuracy {:.4}'.format(avg_test_acc  * 100))
   print('  Theta values', thetas)
-  print('  individual accuracies: \n', test_accs)
+  #print('  individual accuracies: \n', test_accs)
   std = np.array([float(test_accs[k]) for k in test_accs]).std()
-  print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
-  print("Logits stability", np.mean(np.std(logits_acc, axis=0), axis=0))
+  print('Test Accuracy std {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
+  print("Logits std", np.mean(np.mean(np.std(logits_acc, axis=0), axis=0)))
   logit_stability =  np.mean(np.std(logits_acc, axis=0), axis=0)
   w1_stability = np.mean(np.std(W1_acc, axis=0), axis=0)
   w2_stability = np.mean(np.std(W2_acc, axis=0), axis=0)
-  print("W1 stability", np.mean(np.std(W1_acc, axis=0), axis=0))
-  print("W2 stability", np.mean(np.std(W2_acc, axis=0), axis=0))
+  print("W1 std", np.mean(np.std(W1_acc, axis=0), axis=0))
+  print("W2 std", np.mean(np.std(W2_acc, axis=0), axis=0))
 
   file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
   with file:
