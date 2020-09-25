@@ -83,7 +83,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
 
   else:
-      var_list = [model.W1, model.b1, model.W3, model.b3]
+      var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
       #CONSTANC STEP SIZE
       optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step, var_list=var_list)
       #DECREASING STEP SIZE
