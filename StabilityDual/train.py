@@ -30,7 +30,7 @@ parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
 parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.7, 0.8],
                             help="ratio range")
 
-parser.add_argument("--stable", type=int, default=1,
+parser.add_argument("--stable", action="store_true",
                             help="number of subsets")
 
 parser.add_argument("--data_set", type=str, default="mnist",
