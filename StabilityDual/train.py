@@ -187,13 +187,16 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   std = np.array([float(test_accs[k]) for k in test_accs]).std()
   print('  Standard deviation {:.2}'.format(np.array([float(test_accs[k]) for k in test_accs]).std()))
   print("Logits stability", np.mean(np.std(logits_acc, axis=0), axis=0))
+  logit_stability =  np.mean(np.std(logits_acc, axis=0), axis=0)
+  w1_stability = np.mean(np.std(W1_acc, axis=0), axis=0)
+  w2_stability = np.mean(np.std(W2_acc, axis=0), axis=0)
   print("W1 stability", np.mean(np.std(W1_acc, axis=0), axis=0))
   print("W2 stability", np.mean(np.std(W2_acc, axis=0), axis=0))
 
   file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
   with file:
     writer = csv.writer(file) 
-    writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations])
+    writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, logit_stability])
 
 
 
