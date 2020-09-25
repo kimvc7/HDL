@@ -175,7 +175,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       test_accs[experiment] = test_acc  * 100
       thetas[experiment] = theta
       logits_acc[experiment] = sess.run(model.logits, feed_dict=test_dict)
-      W1_acc[experiment] = sess.run(model.W1, feed_dict=test_dict).reshape(-1, 784*512)
+      W1_acc[experiment] = sess.run(model.W1, feed_dict=test_dict).reshape(-1, num_features*512)
       W2_acc[experiment] = sess.run(model.W2, feed_dict=test_dict).reshape(-1, 512*256)
       iterations[experiment] = num_iters
       avg_test_acc += test_acc
