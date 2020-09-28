@@ -18,6 +18,7 @@ import input_data
 from NN_model import Model
 import csv
 import itertools
+from utils import total_gini
 
 
 import argparse
@@ -111,6 +112,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   logits_acc = np.zeros((config['num_experiments'], 10000, 10))
   W1_acc = np.zeros((config['num_experiments'], num_features*512))
   W2_acc = np.zeros((config['num_experiments'], 512*256))
+  W3_acc = np.zeros((config['num_experiments'], 256 * 10))
+  #TODO: replace 10000 by the actual size of test set
+  preds = np.zeros((config['num_experiments'], 10000))
 
   for experiment in range(num_experiments):
     print("Experiment", experiment)
@@ -191,8 +195,10 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       logits_acc[experiment] = sess.run(model.logits, feed_dict=test_dict)
       W1_acc[experiment] = sess.run(model.W1, feed_dict=test_dict).reshape(-1)
       W2_acc[experiment] = sess.run(model.W2, feed_dict=test_dict).reshape(-1)
+      W3_acc[experiment] = sess.run(model.W3, feed_dict=test_dict).reshape(-1)
       iterations[experiment] = num_iters
       avg_test_acc += test_acc
+      preds[experiment] = sess.run(model.y_pred, feed_dict=test_dict)
 
   avg_test_acc  = avg_test_acc/num_experiments
   print('  Average testing accuracy {:.4}'.format(avg_test_acc  * 100))
@@ -204,13 +210,17 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   logit_stability =  np.mean(np.std(logits_acc, axis=0), axis=0)
   w1_stability = np.mean(np.std(W1_acc, axis=0), axis=0)
   w2_stability = np.mean(np.std(W2_acc, axis=0), axis=0)
-  print("W1 std", np.mean(np.std(W1_acc, axis=0), axis=0))
-  print("W2 std", np.mean(np.std(W2_acc, axis=0), axis=0))
+  w3_stability = np.mean(np.std(W3_acc, axis=0), axis=0)
+  gini_stability = total_gini(preds.transpose())
+  print("W1 std", w1_stability)
+  print("W2 std", w2_stability)
+  print("W3 std", w3_stability)
+  print("Gini stability", gini_stability)
 
   file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
   with file:
     writer = csv.writer(file) 
-    writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, logit_stability])
+    writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability])
 
 
 
