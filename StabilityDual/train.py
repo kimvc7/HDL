@@ -24,7 +24,7 @@ import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument("--batch_range", type=int, nargs='+', default=[64, 256],
+parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
                             help="batch range")
 
 parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.8],
@@ -32,6 +32,12 @@ parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.8],
 
 parser.add_argument("--stable", action="store_true",
                             help="number of subsets")
+
+parser.add_argument("--dropout", type=float, default=1,
+                            help="dropout rate, 1 is no dropout, 0 is all set to 0")
+
+parser.add_argument("--l2", type=float, default=0,
+                            help="l2 regularisation rate")
 
 parser.add_argument("--data_set", type=str, default="mnist",
                             help="number of subsets")
@@ -54,6 +60,8 @@ data_set = args.data_set
 batch_range = args.batch_range
 ratio_range = args.ratio_range
 stable = args.stable
+dropout = args.dropout
+l2 = args.l2
 initial_learning_rate = config['initial_learning_rate']
 eta = config['constant_learning_rate']
 learning_rate = tf.train.exponential_decay(initial_learning_rate, 0, 5, 0.85, staircase=True)
@@ -68,8 +76,8 @@ num_features = data.train._images.shape[1]
 
 
 for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Parameters chosen with validation
-  print(batch_size, subset_ratio)
-  model = Model(subset_ratio, num_features)
+  print(batch_size, subset_ratio, dropout)
+  model = Model(subset_ratio, num_features, dropout, l2)
   val_dict = {model.x_input: data.validation._images,
                   model.y_input: data.validation._labels}
   test_dict = {model.x_input: data.test._images,
@@ -77,15 +85,21 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
 
   # Setting up the optimizer
   if stable:
-      #CONSTANC STEP SIZE
-      optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent, global_step=global_step)
-      #DECREASING STEP SIZE
-      #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
+      if l2 > 0:
+          optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent + model.regularizer, global_step=global_step)
+      else:
+          #DECAY STEP SIZE STEP SIZE
+          optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent, global_step=global_step)
+          #DECREASING STEP SIZE
+          #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
 
   else:
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
       #CONSTANC STEP SIZE
-      optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step, var_list=var_list)
+      if l2 > 0:
+          optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent + model.regularizer, global_step=global_step, var_list=var_list)
+      else:
+          optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step, var_list=var_list)
       #DECREASING STEP SIZE
       #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step, var_list=var_list)
 

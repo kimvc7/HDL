@@ -13,10 +13,12 @@ import json
 
 
 class Model(object):
-  def __init__(self, subset_ratio, num_features):
+  def __init__(self, subset_ratio, num_features, dropout = 0, l2 = 0):
+    self.dropout = dropout
     self.subset_ratio = subset_ratio
     self.x_input = tf.placeholder(tf.float32, shape = [None, num_features])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
+    self.dropout = dropout
 
     # Stability dual variable
     self.theta = tf.Variable(tf.constant(1.0))
@@ -25,10 +27,12 @@ class Model(object):
     self.W1 = self._weight_variable([num_features, 512])
     self.b1 = self._bias_variable([512])
     self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
+    self.h1 = tf.nn.dropout(self.h1, self.dropout)
 
     self.W2 = self._weight_variable([512, 256])
     self.b2 = self._bias_variable([256])
     self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
+    self.h2 = tf.nn.dropout(self.h2, self.dropout)
 
     self.W3 = self._weight_variable([256, 10])
     self.b3 = self._bias_variable([10])
@@ -44,6 +48,9 @@ class Model(object):
     #Compute objective value for max creoss-entropy using dual formulation.
     self.stable_data_loss = tf.nn.relu(y_xent - self.theta)
     self.max_xent = self.theta + 1/(self.subset_ratio) * tf.reduce_mean(self.stable_data_loss)
+    self.regularizer = l2*(tf.reduce_sum(tf.square(self.b2))+ tf.reduce_sum(tf.square(self.b1)) +
+                        tf.reduce_sum(tf.square(self.b3))+tf.reduce_sum(tf.square(self.W1)) +
+                           tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))
 
     #Evaluation
     correct_prediction = tf.equal(self.y_pred, self.y_input)
