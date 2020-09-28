@@ -20,10 +20,10 @@ To use the code for dual Stability:
 3) Then ```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --stable --data_set=cifar --dropout 0.9 --l2 0.1``` for stability or
 ```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --data_set=cifar``` for no stability.
 
-
+If possible: get the performance on validation set every 500 updates or so.
 TODO:
 
-- Get the performance on validation set every 500 updates or so.
+- Merge MC and StabilityDual in one ```train.py``` to avoid duplication of efforts.
 - Code the GINI index for stability.
 - Code a better architecture for Cifar: using CNN
 
