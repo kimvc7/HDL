@@ -49,8 +49,8 @@ class Model(object):
     self.stable_data_loss = tf.nn.relu(y_xent - self.theta)
     self.max_xent = self.theta + 1/(self.subset_ratio) * tf.reduce_mean(self.stable_data_loss)
     self.regularizer = l2*(tf.reduce_sum(tf.square(self.b2))+ tf.reduce_sum(tf.square(self.b1)) +
-                        tf.reduce_sum(tf.square(self.b3))+tf.reduce_sum(tf.square(self.W1)) +
-                           tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))
+                        tf.reduce_sum(tf.square(self.b3)))#+tf.reduce_sum(tf.square(self.W1)) +
+                           #tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))
 
     #Evaluation
     correct_prediction = tf.equal(self.y_pred, self.y_input)
