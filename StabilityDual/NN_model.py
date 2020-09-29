@@ -13,7 +13,8 @@ import json
 
 
 class Model(object):
-  def __init__(self, subset_ratio, num_features, dropout = 0, l2 = 0):
+  def __init__(self, num_subsets, batch_size, subset_ratio, num_features, dropout = 0, l2 = 0):
+    subset_batch_size = int(batch_size/num_subsets)
     self.dropout = dropout
     self.subset_ratio = subset_ratio
     self.x_input = tf.placeholder(tf.float32, shape = [None, num_features])
@@ -45,9 +46,18 @@ class Model(object):
     self.xent = tf.reduce_mean(y_xent)
     self.y_pred = tf.argmax(self.pre_softmax, 1)
 
-    #Compute objective value for max creoss-entropy using dual formulation.
+    #Compute objective value for max cross-entropy using dual formulation.
     self.stable_data_loss = tf.nn.relu(y_xent - self.theta)
-    self.max_xent = self.theta + 1/(self.subset_ratio) * tf.reduce_mean(self.stable_data_loss)
+    self.dual_xent = self.theta + 1/(self.subset_ratio) * tf.reduce_mean(self.stable_data_loss)
+
+    #Compute objective value for max cross-entropy using MC formulation.
+    #Split cross entropies for each subset and get maximum
+    split_filter = tf.reshape(tf.ones(subset_batch_size), [1, subset_batch_size, 1,1])
+    split_strides = [1, 1, subset_batch_size, 1]
+    splits_xent = tf.nn.conv2d(tf.reshape(y_xent, [1, 1, batch_size, 1]), split_filter, split_strides, 'SAME')
+    self.MC_xent = tf.reduce_max(splits_xent)/subset_batch_size
+
+
     self.regularizer = l2*(tf.reduce_sum(tf.square(self.b2))+ tf.reduce_sum(tf.square(self.b1)) +
                         tf.reduce_sum(tf.square(self.b3)))#+tf.reduce_sum(tf.square(self.W1)) +
                            #tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))

@@ -15,6 +15,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
 import input_data
+import MC_data
 from NN_model import Model
 import csv
 import itertools
@@ -32,7 +33,7 @@ parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.8],
                             help="ratio range")
 
 parser.add_argument("--stable", action="store_true",
-                            help="number of subsets")
+                            help="stable version")
 
 parser.add_argument("--dropout", type=float, default=1,
                             help="dropout rate, 1 is no dropout, 0 is all set to 0")
@@ -40,8 +41,14 @@ parser.add_argument("--dropout", type=float, default=1,
 parser.add_argument("--l2", type=float, default=0,
                             help="l2 regularisation rate")
 
+parser.add_argument("--num_subsets", type=int, default=1,
+                            help="number of subsets for Monte Carlo, must be a divisor of batch_size.")
+
 parser.add_argument("--data_set", type=str, default="mnist",
                             help="number of subsets")
+
+parser.add_argument("--MC", action="store_true",
+                            help="Monte Carlo version")
 
 with open('config.json') as config_file:
     config = json.load(config_file)
@@ -60,37 +67,50 @@ training_size = config['training_size']
 data_set = args.data_set
 batch_range = args.batch_range
 ratio_range = args.ratio_range
+num_subsets = args.num_subsets
 stable = args.stable
+MC = args.MC
 dropout = args.dropout
 l2 = args.l2
 initial_learning_rate = config['initial_learning_rate']
 eta = config['constant_learning_rate']
 learning_rate = tf.train.exponential_decay(initial_learning_rate, 0, 5, 0.85, staircase=True)
 
-# Setting up the data and the model
-if data_set == "mnist":
-  data = input_data.load_mnist_data_set(validation_size= (60000 - training_size))
-if data_set == "cifar":
-  data = input_data.load_cifar_data_set(validation_size= (60000 - training_size))
 global_step = tf.Variable(1, name="global_step")
-num_features = data.train._images.shape[1]
 
 
 for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Parameters chosen with validation
   print(batch_size, subset_ratio, dropout)
-  model = Model(subset_ratio, num_features, dropout, l2)
-  val_dict = {model.x_input: data.validation._images,
-                  model.y_input: data.validation._labels}
-  test_dict = {model.x_input: data.test._images,
-                  model.y_input: data.test._labels}
+
+  #Setting up the data and loss function
+  if MC:
+    data = MC_data.load_data_set(num_subsets, subset_ratio, validation_size= (60000 - training_size), data_set=data_set)
+  else:
+    data = input_data.load_data_set(validation_size= (60000 - training_size), data_set = data_set)
+
+  #Setting up the model and loss functions
+  num_features = data.train.images.shape[1]
+  model = Model(num_subsets, batch_size, subset_ratio, num_features, dropout, l2)
+  
+  if MC:
+    loss = model.MC_xent
+  else:
+    loss = model.dual_xent
+  
+  #Setting up data for testing and validation
+  val_dict = {model.x_input: data.validation.images,
+                  model.y_input: data.validation.labels}
+  test_dict = {model.x_input: data.test.images,
+                  model.y_input: data.test.labels}
 
   # Setting up the optimizer
   if stable:
+
       if l2 > 0:
-          optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent + model.regularizer, global_step=global_step)
+          optimizer = tf.train.AdamOptimizer(eta).minimize(loss + model.regularizer, global_step=global_step)
       else:
           #DECAY STEP SIZE STEP SIZE
-          optimizer = tf.train.AdamOptimizer(eta).minimize(model.max_xent, global_step=global_step)
+          optimizer = tf.train.AdamOptimizer(eta).minimize(loss, global_step=global_step)
           #DECREASING STEP SIZE
           #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
 
@@ -104,6 +124,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       #DECREASING STEP SIZE
       #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step, var_list=var_list)
 
+  #Initializing loop variables.
   avg_test_acc = 0
   test_accs = {}
   thetas = {}
@@ -113,8 +134,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   W1_acc = np.zeros((config['num_experiments'], num_features*512))
   W2_acc = np.zeros((config['num_experiments'], 512*256))
   W3_acc = np.zeros((config['num_experiments'], 256 * 10))
-  #TODO: replace 10000 by the actual size of test set
-  preds = np.zeros((config['num_experiments'], 10000))
+  #TODO: replace 10000 by the actual size of test set -- solved?
+  preds = np.zeros((config['num_experiments'], data.test.images.shape[0]))
 
   for experiment in range(num_experiments):
     print("Experiment", experiment)
@@ -148,12 +169,14 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
           nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
           val_acc = sess.run(model.accuracy, feed_dict=val_dict)
           nat_xent = sess.run(model.xent, feed_dict=nat_dict)
-          max_xent = sess.run(model.max_xent, feed_dict=nat_dict)
+          dual_xent = sess.run(model.dual_xent, feed_dict=nat_dict)
+          MC_xent = sess.run(model.MC_xent, feed_dict=nat_dict)
           print('Step {}:    ({})'.format(ii, datetime.now()))
           print('    training nat accuracy {:.4}'.format(nat_acc * 100))
           print('    validation nat accuracy {:.4}'.format(val_acc * 100))
           print('    Nat Xent {:.4}'.format(nat_xent))
-          print('    Max Xent {:.4}'.format(max_xent))
+          print('    Max Xent with dual {:.4}'.format(dual_xent))
+          print('    Max Xent with Monte Carlo {:.4}'.format(MC_xent))
 
           #Validation
           if val_acc > best_val_acc:

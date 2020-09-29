@@ -102,31 +102,19 @@ class _DataSet(object):
       end = self._index_in_epoch
       return self._images[start:end], self._labels[start:end]
 
-def load_mnist_data_set(validation_size, reshape=True, dtype=dtypes.float32):
-  (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+def load_data_set(validation_size, data_set, reshape=True, dtype=dtypes.float32):
+  if data_set == "cifar":
+    (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+    num_featurses = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
+  if data_set == "mnist":
+    (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
+    num_features = X_train.shape[1]*X_train.shape[2]
 
   X_val = X_train[:validation_size]
   y_val = y_train[:validation_size]
   X_train = X_train[validation_size:]
   y_train = y_train[validation_size:]
   num_features = X_train.shape[1]*X_train.shape[2]
-
-  options = dict(dtype=dtype, reshape=reshape, num_features=num_features)
-
-  train = _DataSet(X_train, y_train, **options )
-  validation = _DataSet(X_val, y_val, **options)
-  test = _DataSet(X_test, y_test, **options)
-
-  return _Datasets(train=train, validation=validation, test=test)
-
-def load_cifar_data_set(validation_size, reshape=True, dtype=dtypes.float32):
-  (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
-
-  X_val = X_train[:validation_size]
-  y_val = y_train[:validation_size]
-  X_train = X_train[validation_size:]
-  y_train = y_train[validation_size:]
-  num_features = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
 
   options = dict(dtype=dtype, reshape=reshape, num_features=num_features)
 
