@@ -15,7 +15,6 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
 import input_data
-import MC_data
 from NN_model import Model
 import csv
 import itertools
@@ -42,7 +41,7 @@ parser.add_argument("--l2", type=float, default=0,
                             help="l2 regularisation rate")
 
 parser.add_argument("--num_subsets", type=int, default=1,
-                            help="number of subsets for Monte Carlo, must be a divisor of batch_size.")
+                            help="number of subsets for Monte Carlo")
 
 parser.add_argument("--data_set", type=str, default="mnist",
                             help="number of subsets")
@@ -64,6 +63,8 @@ num_output_steps = config['num_output_steps']
 num_summary_steps = config['num_summary_steps']
 num_checkpoint_steps = config['num_checkpoint_steps']
 training_size = config['training_size']
+validation_size= config['validation_size']
+testing_size= config['validation_size']
 data_set = args.data_set
 batch_range = args.batch_range
 ratio_range = args.ratio_range
@@ -82,35 +83,30 @@ global_step = tf.Variable(1, name="global_step")
 for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Parameters chosen with validation
   print(batch_size, subset_ratio, dropout)
 
-  #Setting up the data and loss function
-  if MC:
-    data = MC_data.load_data_set(num_subsets, subset_ratio, validation_size= (60000 - training_size), data_set=data_set)
-  else:
-    data = input_data.load_data_set(validation_size= (60000 - training_size), data_set = data_set)
-
-  #Setting up the model and loss functions
+  #Setting up the data and the model
+  data = input_data.load_data_set(validation_size=(60000-training_size), data_set=data_set)
   num_features = data.train.images.shape[1]
   model = Model(num_subsets, batch_size, subset_ratio, num_features, dropout, l2)
   
   if MC:
-    loss = model.MC_xent
+    max_loss = model.MC_xent
   else:
-    loss = model.dual_xent
+    max_loss = model.dual_xent
   
   #Setting up data for testing and validation
-  val_dict = {model.x_input: data.validation.images,
-                  model.y_input: data.validation.labels}
-  test_dict = {model.x_input: data.test.images,
-                  model.y_input: data.test.labels}
+  val_dict = {model.x_input: data.validation.images[:validation_size],
+                  model.y_input: data.validation.labels[:validation_size]}
+  test_dict = {model.x_input: data.test.images[:testing_size],
+                  model.y_input: data.test.labels[:testing_size]}
 
   # Setting up the optimizer
   if stable:
 
       if l2 > 0:
-          optimizer = tf.train.AdamOptimizer(eta).minimize(loss + model.regularizer, global_step=global_step)
+          optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step)
       else:
           #DECAY STEP SIZE STEP SIZE
-          optimizer = tf.train.AdamOptimizer(eta).minimize(loss, global_step=global_step)
+          optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss, global_step=global_step)
           #DECREASING STEP SIZE
           #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
 
@@ -175,8 +171,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
           print('    training nat accuracy {:.4}'.format(nat_acc * 100))
           print('    validation nat accuracy {:.4}'.format(val_acc * 100))
           print('    Nat Xent {:.4}'.format(nat_xent))
-          print('    Max Xent with dual {:.4}'.format(dual_xent))
-          print('    Max Xent with Monte Carlo {:.4}'.format(MC_xent))
+          print('    Max Xent upper bound with dual {:.4}'.format(dual_xent))
+          print('    Max Xent lower bound with Monte Carlo {:.4}'.format(MC_xent))
 
           #Validation
           if val_acc > best_val_acc:
@@ -243,7 +239,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
   with file:
     writer = csv.writer(file) 
-    writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability])
+    writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability, ])
 
 
 
