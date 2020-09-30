@@ -63,9 +63,11 @@ class Model(object):
     self.MC_xent = max_subset_xent
 
     #Compute regularizer
-    self.regularizer = l2*(tf.reduce_sum(tf.square(self.b2))+ tf.reduce_sum(tf.square(self.b1)) +
-                        tf.reduce_sum(tf.square(self.b3)))#+tf.reduce_sum(tf.square(self.W1)) +
+    #self.regularizer = #l2*(tf.reduce_sum(tf.square(self.b2))+ tf.reduce_sum(tf.square(self.b1)) +
+                        #tf.reduce_sum(tf.square(self.b3)))#+tf.reduce_sum(tf.square(self.W1)) +
                            #tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))
+    self.regularizer = l2*(tf.reduce_sum(tf.square(self.W1)) + tf.reduce_sum(tf.square(self.W2))
+                              + tf.reduce_sum(tf.square(self.W3)))
 
     #Evaluation
     correct_prediction = tf.equal(self.y_pred, self.y_input)
