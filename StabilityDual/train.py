@@ -102,13 +102,28 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   # Setting up the optimizer
   if stable:
 
-      if l2 > 0:
-          optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step)
+      if MC:
+
+        var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
+        if l2 > 0:
+            optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step, var_list=var_list)
+        else:
+            #DECAY STEP SIZE STEP SIZE
+            optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss, global_step=global_step, var_list=var_list)
+            #DECREASING STEP SIZE
+            #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
+
       else:
-          #DECAY STEP SIZE STEP SIZE
-          optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss, global_step=global_step)
-          #DECREASING STEP SIZE
-          #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
+
+        if l2 > 0:
+            optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step)
+        else:
+            #DECAY STEP SIZE STEP SIZE
+            optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss, global_step=global_step)
+            #DECREASING STEP SIZE
+            #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
+
+
 
   else:
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
