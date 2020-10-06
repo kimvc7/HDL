@@ -20,8 +20,9 @@ import csv
 import itertools
 from utils import total_gini
 
-
 import argparse
+
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -57,7 +58,8 @@ args = parser.parse_args()
 print(args)
 
 # Setting up training parameters
-tf.set_random_seed(config['random_seed'])
+seed = config['random_seed']
+tf.set_random_seed(seed)
 max_num_training_steps = config['max_num_training_steps']
 num_output_steps = config['num_output_steps']
 num_summary_steps = config['num_summary_steps']
@@ -75,7 +77,8 @@ dropout = args.dropout
 l2 = args.l2
 initial_learning_rate = config['initial_learning_rate']
 eta = config['constant_learning_rate']
-learning_rate = tf.train.exponential_decay(initial_learning_rate, 0, 5, 0.85, staircase=True)
+learning_rate = tf.train.exponential_decay(initial_learning_rate,
+ 0, 5, 0.85, staircase=True)
 
 global_step = tf.Variable(1, name="global_step")
 
@@ -84,7 +87,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   print(batch_size, subset_ratio, dropout)
 
   #Setting up the data and the model
-  data = input_data.load_data_set(validation_size=(60000-training_size), data_set=data_set)
+  data = input_data.load_data_set(validation_size=(60000-training_size), data_set=data_set, seed=seed)
   num_features = data.train.images.shape[1]
   model = Model(num_subsets, batch_size, subset_ratio, num_features, dropout, l2)
   

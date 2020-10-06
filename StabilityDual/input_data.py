@@ -1,6 +1,7 @@
 import keras
 import collections
 from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import random_seed
 import numpy
 
 _Datasets = collections.namedtuple('_Datasets', ['train', 'validation', 'test'])
@@ -12,7 +13,8 @@ class _DataSet(object):
                labels,
                dtype,
                reshape,
-               num_features):
+               num_features,
+               seed):
     """Construct a _DataSet.
 
     Args:
@@ -26,6 +28,9 @@ class _DataSet(object):
     """
      # Convert shape from [num examples, rows, columns, depth]
      # to [num examples, rows*columns] (assuming depth == 1)
+
+    seed1, seed2 = random_seed.get_seed(seed)
+    numpy.random.seed(seed1 if seed is None else seed2)
     if reshape:
       labels = labels.reshape(labels.shape[0])    
       images = images.reshape(images.shape[0], num_features)
@@ -103,7 +108,7 @@ class _DataSet(object):
       return self._images[start:end], self._labels[start:end]
 
 
-def load_data_set(validation_size, data_set, reshape=True, dtype=dtypes.float32):
+def load_data_set(validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32):
   if data_set == "cifar":
     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
     num_features = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
@@ -116,7 +121,7 @@ def load_data_set(validation_size, data_set, reshape=True, dtype=dtypes.float32)
   X_train = X_train[validation_size:]
   y_train = y_train[validation_size:]
 
-  options = dict(dtype=dtype, reshape=reshape, num_features=num_features)
+  options = dict(dtype=dtype, reshape=reshape, num_features=num_features, seed=seed)
 
   train = _DataSet(X_train, y_train, **options )
   validation = _DataSet(X_val, y_val, **options)
