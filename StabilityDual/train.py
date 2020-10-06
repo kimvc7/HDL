@@ -50,6 +50,12 @@ parser.add_argument("--data_set", type=str, default="mnist",
 parser.add_argument("--MC", action="store_true",
                             help="Monte Carlo version")
 
+parser.add_argument("--train_size", type=float, default=1,
+                            help="training percent of the data")
+
+parser.add_argument("--val_size", type=float, default=0.25,
+                            help="validation percent of the data e.g., 0.25 means 0.25*traning size")
+
 with open('config.json') as config_file:
     config = json.load(config_file)
 
@@ -87,7 +93,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   print(batch_size, subset_ratio, dropout)
 
   #Setting up the data and the model
-  data = input_data.load_data_set(validation_size=(60000-training_size), data_set=data_set, seed=seed)
+  data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
   num_features = data.train.images.shape[1]
   model = Model(num_subsets, batch_size, subset_ratio, num_features, dropout, l2)
   

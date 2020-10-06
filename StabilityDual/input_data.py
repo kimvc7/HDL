@@ -108,7 +108,7 @@ class _DataSet(object):
       return self._images[start:end], self._labels[start:end]
 
 
-def load_data_set(validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32):
+def load_data_set(training_size, validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32):
   if data_set == "cifar":
     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
     num_features = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
@@ -116,10 +116,14 @@ def load_data_set(validation_size, data_set, seed=None, reshape=True, dtype=dtyp
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
     num_features = X_train.shape[1]*X_train.shape[2]
 
-  X_val = X_train[:validation_size]
-  y_val = y_train[:validation_size]
-  X_train = X_train[validation_size:]
-  y_train = y_train[validation_size:]
+  n = int(X_train.shape[0]*training_size)
+  m = int(n*validation_size)
+  X_val = X_train[:m]
+  y_val = y_train[:m]
+  X_train = X_train[m:n]
+  y_train = y_train[m:n]
+  print("There are", X_train.shape[0], "samples in the training set.")
+  print("There are", X_val.shape[0], "samples in the validation set.")
 
   options = dict(dtype=dtype, reshape=reshape, num_features=num_features, seed=seed)
 
