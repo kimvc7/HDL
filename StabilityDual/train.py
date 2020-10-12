@@ -44,6 +44,12 @@ parser.add_argument("--l2", type=float, default=0,
 parser.add_argument("--num_subsets", type=int, default=1,
                             help="number of subsets for Monte Carlo")
 
+parser.add_argument("--l1_size", type=int, default=512,
+                            help="number of nodes in the first layer, 784 -> l1_size")
+
+parser.add_argument("--l2_size", type=int, default=256,
+                            help="number of nodes in the first layer, l1_size -> l2_size")
+
 parser.add_argument("--data_set", type=str, default="mnist",
                             help="number of subsets")
 
@@ -95,7 +101,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   #Setting up the data and the model
   data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
   num_features = data.train.images.shape[1]
-  model = Model(num_subsets, batch_size, subset_ratio, num_features, dropout, l2)
+  model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, dropout, l2)
   
   if MC:
     max_loss = model.MC_xent
@@ -151,9 +157,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   iterations = {}
   num_experiments = config['num_experiments']
   logits_acc = np.zeros((config['num_experiments'], 10000, 10))
-  W1_acc = np.zeros((config['num_experiments'], num_features*512))
-  W2_acc = np.zeros((config['num_experiments'], 512*256))
-  W3_acc = np.zeros((config['num_experiments'], 256 * 10))
+  W1_acc = np.zeros((config['num_experiments'], num_features*args.l1_size))
+  W2_acc = np.zeros((config['num_experiments'], args.l1_size*args.l2_size))
+  W3_acc = np.zeros((config['num_experiments'], args.l2_size * 10))
   #TODO: replace 10000 by the actual size of test set -- solved?
   preds = np.zeros((config['num_experiments'], data.test.images.shape[0]))
 

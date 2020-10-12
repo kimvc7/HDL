@@ -13,7 +13,7 @@ import json
 
 
 class Model(object):
-  def __init__(self, num_subsets, batch_size, subset_ratio, num_features, dropout = 0, l2 = 0):
+  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
@@ -26,17 +26,17 @@ class Model(object):
     self.theta = tf.Variable(tf.constant(1.0))
 
     # Perceptron's fully connected layer.
-    self.W1 = self._weight_variable([num_features, 512])
-    self.b1 = self._bias_variable([512])
+    self.W1 = self._weight_variable([num_features, l1_size])
+    self.b1 = self._bias_variable([l1_size])
     self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
     self.h1 = tf.nn.dropout(self.h1, self.dropout)
 
-    self.W2 = self._weight_variable([512, 256])
-    self.b2 = self._bias_variable([256])
+    self.W2 = self._weight_variable([l1_size, l2_size])
+    self.b2 = self._bias_variable([l2_size])
     self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
     self.h2 = tf.nn.dropout(self.h2, self.dropout)
 
-    self.W3 = self._weight_variable([256, 10])
+    self.W3 = self._weight_variable([l2_size, 10])
     self.b3 = self._bias_variable([10])
     self.pre_softmax = tf.matmul(self.h2, self.W3) + self.b3
 
