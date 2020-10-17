@@ -1,4 +1,4 @@
-# DHL
+# HDL
 NOTE: Requires Tensorflow 2 and Keras.
  Modify parameters in config file with the desired values.
  To train with stability run train.py
