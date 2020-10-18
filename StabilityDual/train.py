@@ -76,9 +76,7 @@ max_num_training_steps = config['max_num_training_steps']
 num_output_steps = config['num_output_steps']
 num_summary_steps = config['num_summary_steps']
 num_checkpoint_steps = config['num_checkpoint_steps']
-training_size = config['training_size']
-validation_size= config['validation_size']
-testing_size= config['validation_size']
+testing_size = config['testing_size']
 data_set = args.data_set
 batch_range = args.batch_range
 ratio_range = args.ratio_range
@@ -109,8 +107,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
     max_loss = model.dual_xent
   
   #Setting up data for testing and validation
-  val_dict = {model.x_input: data.validation.images[:validation_size],
-                  model.y_input: data.validation.labels[:validation_size]}
+  val_dict = {model.x_input: data.validation.images,
+                  model.y_input: data.validation.labels}
   test_dict = {model.x_input: data.test.images[:testing_size],
                   model.y_input: data.test.labels[:testing_size]}
 
@@ -269,7 +267,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
   with file:
     writer = csv.writer(file) 
-    writer.writerow([stable, num_experiments, training_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability, ])
+    writer.writerow([stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability, ])
 
 
 
