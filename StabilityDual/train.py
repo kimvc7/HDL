@@ -204,9 +204,16 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
 
           #Validation
           if val_acc > best_val_acc:
+            print("New best val acc is", val_acc)
             best_val_acc = val_acc
             num_iters = ii
             test_acc = sess.run(model.accuracy, feed_dict=test_dict)
+            print("New best test acc is", test_acc)
+            logits_acc[experiment] = sess.run(model.logits, feed_dict=test_dict)
+            W1_acc[experiment] = sess.run(model.W1).reshape(-1)
+            W2_acc[experiment] = sess.run(model.W2).reshape(-1)
+            W3_acc[experiment] = sess.run(model.W3).reshape(-1)
+            preds[experiment] = sess.run(model.y_pred, feed_dict=test_dict)
 
           #Tensorboard Summaries
           #summary = tf.Summary(value=[
@@ -239,13 +246,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       theta= sess.run(model.theta, feed_dict=test_dict)
       test_accs[experiment] = test_acc  * 100
       thetas[experiment] = theta
-      logits_acc[experiment] = sess.run(model.logits, feed_dict=test_dict)
-      W1_acc[experiment] = sess.run(model.W1, feed_dict=test_dict).reshape(-1)
-      W2_acc[experiment] = sess.run(model.W2, feed_dict=test_dict).reshape(-1)
-      W3_acc[experiment] = sess.run(model.W3, feed_dict=test_dict).reshape(-1)
       iterations[experiment] = num_iters
       avg_test_acc += test_acc
-      preds[experiment] = sess.run(model.y_pred, feed_dict=test_dict)
+
 
   avg_test_acc  = avg_test_acc/num_experiments
   print('  Average testing accuracy {:.4}'.format(avg_test_acc  * 100))
