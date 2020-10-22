@@ -15,7 +15,6 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
 import input_data
-from NN_model import Model
 import csv
 import itertools
 from utils import total_gini
@@ -31,6 +30,10 @@ parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
 
 parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.8],
                             help="ratio range")
+
+parser.add_argument("--model", "-m", type=str, required=True,
+    choices=["ff", "cnn"],
+                            help="model")
 
 parser.add_argument("--stable", action="store_true",
                             help="stable version")
@@ -68,7 +71,12 @@ with open('config.json') as config_file:
 
 args = parser.parse_args()
 print(args)
-
+model_type = args.model
+if model_type == "ff":
+    from NN_model import Model
+elif model_type == "cnn":
+    from CNN_model import Model
+    assert(tf.keras.backend.image_data_format() == "channels_last")
 # Setting up training parameters
 seed = config['random_seed']
 tf.set_random_seed(seed)
@@ -97,15 +105,24 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   print(batch_size, subset_ratio, dropout)
 
   #Setting up the data and the model
-  data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
-  num_features = data.train.images.shape[1]
-  model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, dropout, l2)
-  
+  if model_type == "ff":
+      data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
+      num_features = data.train.images.shape[1]
+      model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, dropout, l2)
+      var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
+  else:
+      data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=False, seed=seed)
+      pixels_x = data.train.images.shape[1]
+      pixels_y = data.train.images.shape[2]
+      num_channels = data.train.images.shape[3]
+      model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, pixels_x,pixels_y,num_channels, dropout, l2)
+      var_list = [model.conv11, model.conv12, model.conv21, model.conv22, model.conv31, model.conv32]      
+
   if MC:
     max_loss = model.MC_xent
   else:
     max_loss = model.dual_xent
-  
+
   #Setting up data for testing and validation
   val_dict = {model.x_input: data.validation.images,
                   model.y_input: data.validation.labels}
@@ -117,7 +134,6 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
 
       if MC:
 
-        var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
         if l2 > 0:
             optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step, var_list=var_list)
         else:
@@ -139,7 +155,6 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
 
 
   else:
-      var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
       #CONSTANC STEP SIZE
       if l2 > 0:
           optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent + model.regularizer, global_step=global_step, var_list=var_list)
@@ -233,7 +248,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
             print('    {} examples per second'.format(
                 num_output_steps * batch_size / training_time))
             training_time = 0.0
-        
+
 
         # Actual training step
         start = timer()
@@ -242,7 +257,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
         training_time += end - start
 
 
-      #Output test results 
+      #Output test results
       theta= sess.run(model.theta, feed_dict=test_dict)
       test_accs[experiment] = test_acc  * 100
       thetas[experiment] = theta
@@ -269,9 +284,5 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
 
   file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
   with file:
-    writer = csv.writer(file) 
+    writer = csv.writer(file)
     writer.writerow([stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability, ])
-
-
-
-
