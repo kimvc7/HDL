@@ -5,13 +5,6 @@ Created on Sat Oct 10 20:31:36 2020
 @author: Michael
 """
 
-"""
-The model is a multiclass perceptron for 10 classes.
-"""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -20,7 +13,7 @@ import json
 
 
 class Model(object):
-  def __init__(self, num_subsets, batch_size, subset_ratio, pixels_x, pixels_y, num_channels,dropout = 0, l2 = 0):
+  def __init__(self, num_subsets, batch_size, cnn_size, fc_size, subset_ratio, pixels_x, pixels_y, num_channels,dropout = 0, l2 = 0, theta = True):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
@@ -28,20 +21,20 @@ class Model(object):
     self.x_input = tf.placeholder(tf.float32, shape = [None, pixels_x, pixels_y, num_channels])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
     self.dropout = dropout
-
+    self.regularizer = tf.keras.regularizers.L2(l2 = l2)
     # Stability dual variable
-    self.theta = tf.Variable(tf.constant(1.0))
+    self.theta = tf.Variable(tf.constant(1.0),trainable = theta)
 
-    self.conv11 = tf.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', input_shape = (pixels_x, pixels_y, num_channels))
-    self.conv12 = tf.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same')
+    self.conv11 = tf.layers.Conv2D(cnn_size, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', kernel_regularizer = self.regularizer, input_shape = (pixels_x, pixels_y, num_channels))
+    self.conv12 = tf.layers.Conv2D(cnn_size, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', kernel_regularizer = self.regularizer)
     self.maxpool1 = tf.layers.MaxPooling2D((2,2),(2,2),padding = 'same')
     self.vgg1_output = self.maxpool1(self.conv12(self.conv11(self.x_input)))
-    self.conv21 = tf.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same')
-    self.conv22 = tf.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same')
+    self.conv21 = tf.layers.Conv2D(cnn_size, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', kernel_regularizer = self.regularizer)
+    self.conv22 = tf.layers.Conv2D(cnn_size, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', kernel_regularizer = self.regularizer)
     self.maxpool2 = tf.layers.MaxPooling2D((2,2),(2,2),padding = 'same')
     self.vgg2_output = self.maxpool2(self.conv22(self.conv21(self.vgg1_output)))
-    self.conv31 = tf.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same')
-    self.conv32 = tf.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same')
+    self.conv31 = tf.layers.Conv2D(cnn_size, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', kernel_regularizer = self.regularizer)
+    self.conv32 = tf.layers.Conv2D(cnn_size, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', kernel_regularizer = self.regularizer)
     self.maxpool3 = tf.layers.MaxPooling2D((2,2),(2,2),padding = 'same')    
     self.vgg3_output = self.maxpool3(self.conv32(self.conv31(self.vgg2_output)))
 
@@ -49,13 +42,13 @@ class Model(object):
     
     self.vgg3_flat = self.flatten(self.vgg3_output)
     
-    self.fc1 = tf.layers.Dense(128, activation='relu', kernel_initializer='glorot_uniform')
+    self.fc1 = tf.layers.Dense(fc_size, activation='relu', kernel_initializer='glorot_uniform', kernel_regularizer = self.regularizer)
 
     # Perceptron's fully connected layer.
     self.h1 = tf.nn.dropout(self.fc1(self.vgg3_flat), self.dropout)
 
 
-    self.fc2 = tf.layers.Dense(10, activation='relu', kernel_initializer='glorot_uniform')
+    self.fc2 = tf.layers.Dense(10, activation='relu', kernel_initializer='glorot_uniform', kernel_regularizer = self.regularizer)
 
     self.pre_softmax = tf.nn.dropout(self.fc2(self.h1), self.dropout)
 
@@ -80,13 +73,6 @@ class Model(object):
       max_subset_xent = tf.maximum(max_subset_xent, tf.reduce_mean(subset_y_xent))
 
     self.MC_xent = max_subset_xent
-
-    #Compute regularizer
-    #self.regularizer = #l2*(tf.reduce_sum(tf.square(self.b2))+ tf.reduce_sum(tf.square(self.b1)) +
-                        #tf.reduce_sum(tf.square(self.b3)))#+tf.reduce_sum(tf.square(self.W1)) +
-                           #tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))
-    self.regularizer = l2*(tf.reduce_sum(tf.square(self.W1)) + tf.reduce_sum(tf.square(self.W2))
-                              + tf.reduce_sum(tf.square(self.W3)))
 
     #Evaluation
     correct_prediction = tf.equal(self.y_pred, self.y_input)
