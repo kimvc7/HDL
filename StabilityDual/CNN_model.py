@@ -48,7 +48,7 @@ class Model(object):
     self.h1 = tf.nn.dropout(self.fc1(self.vgg3_flat), self.dropout)
 
 
-    self.fc2 = tf.layers.Dense(10, activation='relu', kernel_initializer='glorot_uniform', kernel_regularizer = self.regularizer)
+    self.fc2 = tf.layers.Dense(10, activation='sigmoid', kernel_initializer='glorot_uniform', kernel_regularizer = self.regularizer)
 
     self.pre_softmax = tf.nn.dropout(self.fc2(self.h1), self.dropout)
 
