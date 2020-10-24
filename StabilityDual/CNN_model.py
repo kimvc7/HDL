@@ -21,7 +21,7 @@ class Model(object):
     self.x_input = tf.placeholder(tf.float32, shape = [None, pixels_x, pixels_y, num_channels])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
     self.dropout = dropout
-    self.regularizer = tf.keras.regularizers.L2(l2 = l2)
+    self.regularizer = tf.keras.regularizers.l2(l2)
     # Stability dual variable
     self.theta = tf.Variable(tf.constant(1.0),trainable = theta)
 
