@@ -135,9 +135,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
 
   #Setting up data for testing and validation
   val_dict = {model.x_input: data.validation.images,
-                  model.y_input: data.validation.labels}
+                  model.y_input: data.validation.labels.reshape(-1)}
   test_dict = {model.x_input: data.test.images[:testing_size],
-                  model.y_input: data.test.labels[:testing_size]}
+                  model.y_input: data.test.labels[:testing_size].reshape(-1)}
 
   # Setting up the optimizer
   if model_type == "ff":
@@ -218,7 +218,6 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
           num_iters = 0
           for ii in range(max_num_training_steps):
             x_batch, y_batch = data.train.next_batch(batch_size)
-    
             nat_dict = {model.x_input: x_batch,
                         model.y_input: y_batch}
     
@@ -319,7 +318,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
           num_iters = 0
           for ii in range(max_num_training_steps):
             x_batch, y_batch = data.train.next_batch(batch_size)
-    
+            y_batch = y_batch.reshape(-1) 
             nat_dict = {model.x_input: x_batch,
                         model.y_input: y_batch}
     
