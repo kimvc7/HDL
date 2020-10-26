@@ -12,7 +12,7 @@ from l0_regularization import *#get_l0_norm
 
 
 class Model(object):
-  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0):
+  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0, reg_stability = 0):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
@@ -92,6 +92,8 @@ class Model(object):
     if l0 > 0:
       self.regularizer = self.regularizer + l0 * (self.l0_norm_W1 + self.l0_norm_W2 + self.l0_norm_W3)
 
+    if reg_stability > 0 :
+      self.regularizer = self.regularizer + reg_stability * tf.math.reduce_std(self.h1)
     #Evaluation
     correct_prediction = tf.equal(self.y_pred, self.y_input)
     self.num_correct = tf.reduce_sum(tf.cast(correct_prediction, tf.int64))
