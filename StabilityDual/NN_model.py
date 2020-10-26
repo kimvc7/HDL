@@ -8,9 +8,11 @@ tf.disable_v2_behavior()
 import numpy as np
 import json
 
+from l0_regularization import *#get_l0_norm
+
 
 class Model(object):
-  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0):
+  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
@@ -25,17 +27,39 @@ class Model(object):
     # Perceptron's fully connected layer.
     self.W1 = self._weight_variable([num_features, l1_size])
     self.b1 = self._bias_variable([l1_size])
-    self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
-    self.h1 = tf.nn.dropout(self.h1, self.dropout)
+
+    if l0 > 0:
+      #self.mask_W1 = get_l0_mask(self.W1, "W1")
+      self.W1_masked = tf.Variable(tf.zeros(self.W1.get_shape()), name="W1_m")#self._weight_variable([num_features, l1_size])
+      self.W1_masked, self.l0_norm_W1 = get_l0_norm_full(self.W1, "W1")
+      #self.W1 = self.W1 + self.W1_masked
+      self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1_masked) + self.b1)
+    else:
+      self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
+      self.h1 = tf.nn.dropout(self.h1, self.dropout)
 
     self.W2 = self._weight_variable([l1_size, l2_size])
     self.b2 = self._bias_variable([l2_size])
-    self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
-    self.h2 = tf.nn.dropout(self.h2, self.dropout)
+
+
+    if l0 > 0:
+      self.mask_W2 = get_l0_mask(self.W2, "W2")
+      self.W2_masked, self.l0_norm_W2 = get_l0_norm_full(self.W2, "W2")
+      self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2_masked) + self.b2)
+    else:
+      self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
+      self.h2 = tf.nn.dropout(self.h2, self.dropout)
 
     self.W3 = self._weight_variable([l2_size, 10])
     self.b3 = self._bias_variable([10])
-    self.pre_softmax = tf.matmul(self.h2, self.W3) + self.b3
+
+    if l0 > 0:
+      self.mask_W3 = get_l0_mask(self.W3, "W3")
+      self.W3_masked, self.l0_norm_W3 = get_l0_norm_full(self.W3, "W3")
+      self.pre_softmax = tf.matmul(self.h2, self.W3_masked) + self.b3
+
+    else:
+      self.pre_softmax = tf.matmul(self.h2, self.W3) + self.b3
 
     #Prediction 
     y_xent = tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -65,6 +89,8 @@ class Model(object):
                            #tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))
     self.regularizer = l2*(tf.reduce_sum(tf.square(self.W1)) + tf.reduce_sum(tf.square(self.W2))
                               + tf.reduce_sum(tf.square(self.W3)))
+    if l0 > 0:
+      self.regularizer = self.regularizer + l0 * (self.l0_norm_W1 + self.l0_norm_W2 + self.l0_norm_W3)
 
     #Evaluation
     correct_prediction = tf.equal(self.y_pred, self.y_input)

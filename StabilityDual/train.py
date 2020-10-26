@@ -42,7 +42,10 @@ parser.add_argument("--dropout", type=float, default=1,
                             help="dropout rate, 1 is no dropout, 0 is all set to 0")
 
 parser.add_argument("--l2", type=float, default=0,
-                            help="l2 regularisation rate")
+                            help="l2 regularization rate")
+
+parser.add_argument("--l0", type=float, default=0,
+                            help="l0 regularization rate")
 
 parser.add_argument("--num_subsets", type=int, default=1,
                             help="number of subsets for Monte Carlo")
@@ -114,7 +117,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   if model_type == "ff":
       data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
       num_features = data.train.images.shape[1]
-      model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, dropout, l2)
+      model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, dropout, l2, args.l0)
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
   elif model_type == "cnn":
       data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=False, seed=seed)
@@ -145,7 +148,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
     
           if MC:
     
-            if l2 > 0:
+            if l2+args.l0 > 0:
                 optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step, var_list=var_list)
             else:
                 #DECAY STEP SIZE STEP SIZE
@@ -167,7 +170,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
     
       else:
           #CONSTANC STEP SIZE
-          if l2 > 0:
+          if l2 + args.l0 > 0:
               optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent + model.regularizer, global_step=global_step, var_list=var_list)
           else:
               optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step, var_list=var_list)
@@ -228,13 +231,21 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
               nat_xent = sess.run(model.xent, feed_dict=nat_dict)
               dual_xent = sess.run(model.dual_xent, feed_dict=nat_dict)
               MC_xent = sess.run(model.MC_xent, feed_dict=nat_dict)
+              regularizer = sess.run(model.regularizer, feed_dict=nat_dict)
               print('Step {}:    ({})'.format(ii, datetime.now()))
               print('    training nat accuracy {:.4}'.format(nat_acc * 100))
               print('    validation nat accuracy {:.4}'.format(val_acc * 100))
               print('    Nat Xent {:.4}'.format(nat_xent))
               print('    Max Xent upper bound with dual {:.4}'.format(dual_xent))
               print('    Max Xent lower bound with Monte Carlo {:.4}'.format(MC_xent))
-    
+              print('    Regularizer', regularizer)
+              if args.l0 > 0:
+                print('    W1_masked features', sum(sess.run(model.W1_masked).reshape(-1) > 0))
+                print('    W2_masked features', sum(sess.run(model.W2_masked).reshape(-1) > 0))
+                print('    W3_masked features', sum(sess.run(model.W3_masked).reshape(-1) > 0))
+              #print('    W1 features', sum(sess.run(model.W1).reshape(-1) > 1e-12))
+              #print('    W2 features', sum(sess.run(model.W2).reshape(-1) > 1e-12))
+              #print('    W3 features', sum(sess.run(model.W3).reshape(-1) > 1e-12))
               #Validation
               if val_acc > best_val_acc:
                 print("New best val acc is", val_acc)
