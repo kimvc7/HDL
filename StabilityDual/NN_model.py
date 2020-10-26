@@ -93,7 +93,7 @@ class Model(object):
       self.regularizer = self.regularizer + l0 * (self.l0_norm_W1 + self.l0_norm_W2 + self.l0_norm_W3)
 
     if reg_stability > 0 :
-      self.regularizer = self.regularizer + reg_stability * tf.math.reduce_std(self.h1)
+      self.regularizer = self.regularizer + reg_stability * tf.math.reduce_std(self.h2)
     #Evaluation
     correct_prediction = tf.equal(self.y_pred, self.y_input)
     self.num_correct = tf.reduce_sum(tf.cast(correct_prediction, tf.int64))
