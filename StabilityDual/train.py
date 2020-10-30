@@ -98,11 +98,8 @@ num_summary_steps = config['num_summary_steps']
 num_checkpoint_steps = config['num_checkpoint_steps']
 testing_size = config['testing_size']
 data_set = args.data_set
-batch_range = args.batch_range
 ratio_range = args.ratio_range
 num_subsets = args.num_subsets
-stable = args.stable
-MC = args.MC
 dropout = args.dropout
 l2 = args.l2
 initial_learning_rate = config['initial_learning_rate']
@@ -113,7 +110,7 @@ learning_rate = tf.train.exponential_decay(initial_learning_rate,
 global_step = tf.Variable(1, name="global_step")
 
 
-for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Parameters chosen with validation
+for batch_size, subset_ratio in itertools.product(args.batch_range, ratio_range): #Parameters chosen with validation
   print(batch_size, subset_ratio, dropout)
 
   #Setting up the data and the model
@@ -128,16 +125,17 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       pixels_x = data.train.images.shape[1]
       pixels_y = data.train.images.shape[2]
       num_channels = data.train.images.shape[3]
-      if stable and (not MC):
-          theta = True
-      else:
-          theta = False
+
+      theta = args.stable and (not MC)
+
       model = Model(num_subsets, batch_size, args.cnn_size, args.fc_size, subset_ratio, pixels_x,pixels_y,num_channels, dropout, l2, theta)
       
-  if MC:
+  if args.MC:
     max_loss = model.MC_xent
-  else:
+  elif args.stable:
     max_loss = model.dual_xent
+  else:
+    max_loss = model.xent
 
   #Setting up data for testing and validation
   val_dict = {model.x_input: data.validation.images,
@@ -147,42 +145,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
 
   # Setting up the optimizer
   if model_type == "ff":
-      if stable:
-    
-          if MC:
-    
-            if l2+args.l0 > 0:
-                optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step, var_list=var_list)
-            else:
-                #DECAY STEP SIZE STEP SIZE
-                optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss, global_step=global_step, var_list=var_list)
-                #DECREASING STEP SIZE
-                #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
-    
-          else:
-    
-            if l2 > 0:
-                optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step)
-            else:
-                #DECAY STEP SIZE STEP SIZE
-                optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss, global_step=global_step)
-                #DECREASING STEP SIZE
-                #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step)
-    
-    
-    
-      else:
-          #CONSTANC STEP SIZE
-          optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent + model.regularizer, global_step=global_step, var_list=var_list)
-          #DECREASING STEP SIZE
-          #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step, var_list=var_list)
+    optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step, var_list=var_list)
   elif model_type == "cnn":
-    if stable:
-        optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss, global_step=global_step)
-    else:
-        optimizer = tf.train.AdamOptimizer(eta).minimize(model.xent, global_step=global_step)
-  #DECREASING STEP SIZE
-  #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(model.xent, global_step=global_step, var_list=var_list)      
+    optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step)
 
   #Initializing loop variables.
   avg_test_acc = 0
@@ -191,11 +156,11 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
   iterations = {}
   num_experiments = config['num_experiments']
   if model_type == "ff":
-      logits_acc = np.zeros((config['num_experiments'], 10000, 10))
+      #TODO Make 10 modular
+      logits_acc = np.zeros((config['num_experiments'], data.test.images.shape[0], 10))
       W1_acc = np.zeros((config['num_experiments'], num_features*args.l1_size))
       W2_acc = np.zeros((config['num_experiments'], args.l1_size*args.l2_size))
       W3_acc = np.zeros((config['num_experiments'], args.l2_size * 10))
-      #TODO: replace 10000 by the actual size of test set -- solved?
       preds = np.zeros((config['num_experiments'], data.test.images.shape[0]))
     
       for experiment in range(num_experiments):
@@ -243,8 +208,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
                 print('    W1_masked features', sum(sess.run(model.W1_masked).reshape(-1) > 0))
                 print('    W2_masked features', sum(sess.run(model.W2_masked).reshape(-1) > 0))
                 print('    W3_masked features', sum(sess.run(model.W3_masked).reshape(-1) > 0))
-              print("h1 std", np.std(sess.run(model.h1, feed_dict=nat_dict)))
-              print("h2 std", np.std(sess.run(model.h2, feed_dict=nat_dict)))
+              #print("h1 std", np.std(sess.run(model.h1, feed_dict=nat_dict)))
+              #print("h1 std 2", np.std(sess.run(model.h2, feed_dict=nat_dict), 0))
               #print('    W1 features', sum(sess.run(model.W1).reshape(-1) > 1e-12))
               #print('    W2 features', sum(sess.run(model.W2).reshape(-1) > 1e-12))
               #print('    W3 features', sum(sess.run(model.W3).reshape(-1) > 1e-12))
@@ -305,7 +270,6 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       fc1_acc = np.zeros((config['num_experiments'], int((int(int((pixels_x+1)/2)+1)/2+1)/2) * int((int(int((pixels_y+1)/2)+1)/2+1)/2) * args.cnn_size * args.fc_size))
       fc2_acc = np.zeros((config['num_experiments'], args.fc_size * 10))
 
-      #TODO: replace 10000 by the actual size of test set -- solved?
       preds = np.zeros((config['num_experiments'], data.test.images.shape[0]))
     
       for experiment in range(num_experiments):
@@ -422,7 +386,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       file = open(str('results' + data_set + '.csv'), 'a+', newline ='')
       with file:
         writer = csv.writer(file)
-        writer.writerow([stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability, ])
+        writer.writerow([args.stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, w1_stability, w2_stability, w3_stability, logit_stability, gini_stability, ])
 
   elif model_type == "cnn":
       conv11_stability = np.mean(np.std(conv11_acc, axis=0), axis=0)
@@ -447,4 +411,4 @@ for batch_size, subset_ratio in itertools.product(batch_range, ratio_range): #Pa
       file = open(str('results_cnn' + data_set + '.csv'), 'a+', newline ='')
       with file:
         writer = csv.writer(file)
-        writer.writerow([stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, conv11_stability, conv12_stability, conv21_stability, conv22_stability,conv31_stability,conv32_stability, fc1_stability, fc2_stability, logit_stability, gini_stability, ])
+        writer.writerow([args.stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, test_accs, std, thetas, max_num_training_steps, iterations, conv11_stability, conv12_stability, conv21_stability, conv22_stability,conv31_stability,conv32_stability, fc1_stability, fc2_stability, logit_stability, gini_stability, ])

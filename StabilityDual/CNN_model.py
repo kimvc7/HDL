@@ -51,7 +51,7 @@ class Model(object):
     self.fc2 = tf.layers.Dense(10, activation='sigmoid', kernel_initializer='glorot_uniform', kernel_regularizer = self.regularizer)
 
     self.pre_softmax = tf.nn.dropout(self.fc2(self.h1), self.dropout)
-
+    self.regularizer = 0
     #Prediction 
     y_xent = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=self.y_input, logits=self.pre_softmax)
