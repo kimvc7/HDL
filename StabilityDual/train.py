@@ -181,8 +181,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
             sess.run(optimizer, feed_dict=nat_dict)
             end = timer()
             training_time += end - start
-    
-    
+
           #Output test results
           utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters)
           avg_test_acc += test_acc
