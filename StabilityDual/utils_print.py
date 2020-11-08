@@ -9,13 +9,24 @@ def print_metrics(sess, model, nat_dict, val_dict, ii, args):
     nat_xent = sess.run(model.xent, feed_dict=nat_dict)
     dual_xent = sess.run(model.dual_xent, feed_dict=nat_dict)
     MC_xent = sess.run(model.MC_xent, feed_dict=nat_dict)
+    robust_xent = sess.run(model.robust_xent, feed_dict=nat_dict)
+    robust_stable_xent = sess.run(model.robust_stable_xent, feed_dict=nat_dict)
+    theta = sess.run(model.theta, feed_dict=nat_dict)
 
     print('Step {}:    ({})'.format(ii, datetime.now()))
     print('    training nat accuracy {:.4}'.format(nat_acc * 100))
     print('    validation nat accuracy {:.4}'.format(val_acc * 100))
     print('    Nat Xent {:.4}'.format(nat_xent))
-    print('    Max Xent upper bound with dual {:.4}'.format(dual_xent))
-    print('    Max Xent lower bound with Monte Carlo {:.4}'.format(MC_xent))
+
+    if args.stable:
+        print('    theta {:.4}'.format(theta))
+        print('    Stable xent upper bound with dual {:.4}'.format(dual_xent))
+        print('    Stable Xent lower bound with Monte Carlo {:.4}'.format(MC_xent))
+
+    if args.robust > 0 and args.model == "ff":
+        print('    Robust Xent {:.4}'.format(robust_xent))
+        if args.stable:
+            print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
 
     if args.l0 > 0 and args.model == "ff":
         print('    W1_masked features', sum(sess.run(model.W1_masked).reshape(-1) > 0))
@@ -66,12 +77,12 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         writer = csv.writer(file)
         if args.model == "ff":
             writer.writerow(
-                [args.stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
+                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
                 dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, w3_stability, logit_stability,
                 gini_stability, ])
         elif args.model == "cnn":
             writer.writerow(
-                [args.stable, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
+                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
                  dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], conv11_stability, conv12_stability, conv21_stability,
                  conv22_stability, conv31_stability, conv32_stability, fc1_stability, fc2_stability, logit_stability,
                  gini_stability, ])

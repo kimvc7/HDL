@@ -11,30 +11,33 @@ import json
 from l0_regularization import *#get_l0_norm
 
 
+
 class Model(object):
-  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0, reg_stability = 0):
+  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0, eps=0, reg_stability = 0):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
     self.subset_ratio = subset_ratio
     self.x_input = tf.placeholder(tf.float32, shape = [None, num_features])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
-    self.dropout = dropout
+    self.eps =  eps
 
     # Stability dual variable
-    self.theta = tf.Variable(tf.constant(1.0))
+    self.theta = tf.Variable(tf.constant(0.1))
 
     # Perceptron's fully connected layer.
     self.W1 = self._weight_variable([num_features, l1_size])
     self.b1 = self._bias_variable([l1_size])
 
     if l0 > 0:
+
       #self.mask_W1 = get_l0_mask(self.W1, "W1")
       self.W1_masked = tf.Variable(tf.zeros(self.W1.get_shape()), name="W1_m")#self._weight_variable([num_features, l1_size])
       self.W1_masked, self.l0_norm_W1 = get_l0_norm_full(self.W1, "W1")
       #self.W1 = self.W1 + self.W1_masked
       self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1_masked) + self.b1)
     else:
+
       self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
       self.h1 = tf.nn.dropout(self.h1, self.dropout)
 
@@ -68,9 +71,17 @@ class Model(object):
     self.xent = tf.reduce_mean(y_xent)
     self.y_pred = tf.argmax(self.pre_softmax, 1)
 
-    #Compute objective value for max cross-entropy using dual formulation.
+    #Compute objective value for robust cross-entropy.
+    robust_y_xent = tf.vectorized_map(self._loss_fn, (self.h1, self.h2, self.pre_softmax, self.y_input))
+    self.robust_xent = tf.reduce_mean(robust_y_xent)
+
+    #Compute objective value for stable cross-entropy using dual formulation.
     self.stable_data_loss = tf.nn.relu(y_xent - self.theta)
     self.dual_xent = self.theta + 1/(self.subset_ratio) * tf.reduce_mean(self.stable_data_loss)
+
+    #Compute objective value for stable robust cross-entropy using dual formulation.
+    self.rob_stable_data_loss = tf.nn.relu(robust_y_xent - self.theta)
+    self.robust_stable_xent = self.theta + 1/(self.subset_ratio) * tf.reduce_mean(self.rob_stable_data_loss)
 
     #Compute objective value for max cross-entropy using MC formulation.
     max_subset_xent = 0.0
@@ -99,11 +110,21 @@ class Model(object):
     self.num_correct = tf.reduce_sum(tf.cast(correct_prediction, tf.int64))
     self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+  @tf.function 
+  def _loss_fn(self, args):
+      h1, h2, output, y = args
+      reg_term = tf.matmul(tf.multiply(tf.sign(h2), tf.matmul(tf.multiply(tf.sign(h1), self.W1), self.W2)), self.W3)
+      reg_term_y = tf.reshape(tf.gather_nd(tf.transpose(reg_term), [y]), (784, 1))
+      reg_pre_logsumexp = tf.abs(reg_term - reg_term_y)
+      output_y = tf.gather_nd(output, [y])
+      nom_pre_logsumexp = output - output_y
+      pre_logsumexp = self.eps*tf.reduce_sum(reg_pre_logsumexp, axis=0) + nom_pre_logsumexp
+      return tf.reduce_logsumexp(pre_logsumexp)
 
   @staticmethod
   def _weight_variable(shape):
-      initial = tf.truncated_normal(shape, stddev=0.1, seed=0)
-      return tf.Variable(initial)
+      initial = tf.glorot_uniform_initializer()
+      return tf.get_variable(shape=shape, initializer=initial, name=str(np.random.randint(1e10)))
 
   @staticmethod
   def _bias_variable(shape):

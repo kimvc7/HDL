@@ -5,13 +5,19 @@ with open('config.json') as config_file:
     config = json.load(config_file)
 
 def get_loss(model, args):
+    loss = model.xent
+    if args.robust and not args.stable:
+        loss = model.robust_xent
     if args.MC:
-        max_loss = model.MC_xent
+        assert(not args.robust)
+        loss = model.MC_xent
     elif args.stable:
-        max_loss = model.dual_xent
-    else:
-        max_loss = model.xent
-    return max_loss
+        if args.robust:
+            loss = model.robust_stable_xent
+        else:
+            loss = model.dual_xent
+
+    return loss
 
 
 def create_dict(args, train_shape, test_size):

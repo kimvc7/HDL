@@ -1,6 +1,7 @@
 import math
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 GAMMA = -0.1
 ZETA = 1.1

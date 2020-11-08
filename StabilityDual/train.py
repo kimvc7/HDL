@@ -20,6 +20,7 @@ import utils_print
 
 import argparse
 
+
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
@@ -31,11 +32,15 @@ parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.8],
 parser.add_argument("--model", "-m", type=str, required=True, choices=["ff", "cnn"],
                             help="model type, either ff or cnn")
 
+
 parser.add_argument("--stable", action="store_true",
                             help="stable version")
 
 parser.add_argument("--dropout", type=float, default=1,
                             help="dropout rate, 1 is no dropout, 0 is all set to 0")
+
+parser.add_argument("--robust", "-r", type=float, default=0,
+                            help="Uncertainty set parameter for robustness.")
 
 parser.add_argument("--l2", type=float, default=0,
                             help="l2 regularization rate")
@@ -49,10 +54,10 @@ parser.add_argument("--reg_stability", type=float, default=0,
 parser.add_argument("--num_subsets", type=int, default=1,
                             help="number of subsets for Monte Carlo")
 
-parser.add_argument("--l1_size", type=int, default=512,
+parser.add_argument("--l1_size", type=int, default=256,
                             help="number of nodes in the first layer, 784 -> l1_size")
 
-parser.add_argument("--l2_size", type=int, default=256,
+parser.add_argument("--l2_size", type=int, default=128,
                             help="number of nodes in the first layer, l1_size -> l2_size")
 
 parser.add_argument("--cnn_size", type=int, default=32,
@@ -67,10 +72,10 @@ parser.add_argument("--data_set", type=str, default="mnist",
 parser.add_argument("--MC", action="store_true",
                             help="Monte Carlo version")
 
-parser.add_argument("--train_size", type=float, default=1,
+parser.add_argument("--train_size", type=float, default=0.80,
                             help="training percent of the data")
 
-parser.add_argument("--val_size", type=float, default=0.25,
+parser.add_argument("--val_size", type=float, default=0.20,
                             help="validation percent of the data e.g., 0.25 means 0.25*traning size")
 
 with open('config.json') as config_file:
@@ -81,6 +86,7 @@ args = parser.parse_args()
 print(args)
 if args.model == "ff":
     from NN_model import Model
+    #from L2NN_model import Model
 elif args.model == "cnn":
     from CNN_model import Model
     assert(tf.keras.backend.image_data_format() == "channels_last")
@@ -109,7 +115,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
   if args.model == "ff":
       data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
       num_features = data.train.images.shape[1]
-      model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.reg_stability)
+      model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.robust, args.reg_stability)
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
   elif args.model == "cnn":
       data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=False, seed=seed)
@@ -122,8 +128,9 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
       model = Model(num_subsets, batch_size, args.cnn_size, args.fc_size, subset_ratio, pixels_x, pixels_y, num_channels, args.dropout, args.l2, theta)
 
+
   #Returns the right loss depending on MC or dual or nothing
-  max_loss = utils_model.get_loss(model, args)
+  loss = utils_model.get_loss(model, args)
 
   #Setting up data for testing and validation
   val_dict = {model.x_input: data.validation.images,
@@ -132,10 +139,10 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
                   model.y_input: data.test.labels[:testing_size].reshape(-1)}
 
   # Setting up the optimizer
-  if args.model == "ff":
-    optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step, var_list=var_list)
-  elif args.model == "cnn":
-    optimizer = tf.train.AdamOptimizer(eta).minimize(max_loss + model.regularizer, global_step=global_step)
+  if args.stable and not args.MC:
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss+ model.regularizer, global_step=global_step)
+  else:
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss+ model.regularizer, global_step=global_step, var_list=var_list)
 
   #Initializing loop variables.
   avg_test_acc = 0
@@ -181,7 +188,8 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
             sess.run(optimizer, feed_dict=nat_dict)
             end = timer()
             training_time += end - start
-
+    
+    
           #Output test results
           utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters)
           avg_test_acc += test_acc
