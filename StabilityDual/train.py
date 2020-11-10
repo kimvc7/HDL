@@ -117,6 +117,8 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
       num_features = data.train.images.shape[1]
       model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.robust, args.reg_stability)
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
+      if args.l0 > 0:
+          var_list = [model.W1, model.W1_masked, model.b1, model.W2, model.W2_masked, model.b2, model.W3, model.W3_masked, model.b3]
   elif args.model == "cnn":
       data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=False, seed=seed)
       print(data.train.images.shape)

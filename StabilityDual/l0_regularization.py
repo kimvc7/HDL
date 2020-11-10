@@ -33,7 +33,7 @@ def get_l0_norm_full(x, varname):
     mask = hard_sigmoid(s_bar)
 
     # return masked version of tensor and l0 norm
-    return tf.multiply(x, mask, name = varname + 'masked'), l0_norm
+    return tf.Variable(tf.multiply(x, mask, name = varname + 'masked')), l0_norm
 
 def get_l0_norm(x, varname):
 
