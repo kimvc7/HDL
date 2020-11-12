@@ -72,7 +72,18 @@ class Model(object):
     self.y_pred = tf.argmax(self.pre_softmax, 1)
 
     #Compute objective value for robust cross-entropy.
-    robust_y_xent = tf.vectorized_map(self._loss_fn, (self.h1, self.h2, self.pre_softmax, self.y_input))
+    data_range = tf.range(tf.shape(self.y_input)[0])
+    indices = tf.map_fn(lambda n: tf.stack([tf.cast(self.y_input[n], tf.int32), n]), data_range)
+    pre_softmax_t = tf.transpose(self.pre_softmax)
+    self.nom_exponent = pre_softmax_t -  tf.gather_nd(pre_softmax_t, indices)
+
+    sum_exps = 0
+    for i in range(10):
+      grad = tf.gradients(self.nom_exponent[i], self.x_input)
+      exponent = eps*tf.reduce_sum(tf.abs(grad[0]), axis=1) + self.nom_exponent[i]
+      sum_exps+=tf.exp(exponent)
+
+    robust_y_xent = tf.log(sum_exps)
     self.robust_xent = tf.reduce_mean(robust_y_xent)
 
     #Compute objective value for stable cross-entropy using dual formulation.
@@ -110,16 +121,6 @@ class Model(object):
     self.num_correct = tf.reduce_sum(tf.cast(correct_prediction, tf.int64))
     self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-  @tf.function 
-  def _loss_fn(self, args):
-      h1, h2, output, y = args
-      reg_term = tf.matmul(tf.multiply(tf.sign(h2), tf.matmul(tf.multiply(tf.sign(h1), self.W1), self.W2)), self.W3)
-      reg_term_y = tf.reshape(tf.gather_nd(tf.transpose(reg_term), [y]), (784, 1))
-      reg_pre_logsumexp = tf.abs(reg_term - reg_term_y)
-      output_y = tf.gather_nd(output, [y])
-      nom_pre_logsumexp = output - output_y
-      pre_logsumexp = self.eps*tf.reduce_sum(reg_pre_logsumexp, axis=0) + nom_pre_logsumexp
-      return tf.reduce_logsumexp(pre_logsumexp)
 
   @staticmethod
   def _weight_variable(shape):
