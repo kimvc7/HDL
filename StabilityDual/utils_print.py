@@ -3,10 +3,9 @@ import numpy as np
 import csv
 from utils import total_gini
 
-def print_metrics(sess, model, nat_dict, val_dict, ii, args, adv_dict):
+def print_metrics(sess, model, nat_dict, val_dict, ii, args):
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
     val_acc = sess.run(model.accuracy, feed_dict=val_dict)
-    adv_acc = sess.run(model.accuracy, feed_dict=adv_dict)
     nat_xent = sess.run(model.xent, feed_dict=nat_dict)
     dual_xent = sess.run(model.dual_xent, feed_dict=nat_dict)
     MC_xent = sess.run(model.MC_xent, feed_dict=nat_dict)
@@ -26,7 +25,6 @@ def print_metrics(sess, model, nat_dict, val_dict, ii, args, adv_dict):
 
     if args.robust > 0 and args.model == "ff":
         print('    Robust Xent {:.4}'.format(robust_xent))
-        print('    training adv accuracy {:.4}'.format(adv_acc * 100))
         if args.stable:
             print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
 
@@ -46,8 +44,7 @@ def print_metrics(sess, model, nat_dict, val_dict, ii, args, adv_dict):
 
     return val_acc
 
-def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters, adv_test_acc):
-    dict_exp['adv_test_accs'][experiment] = adv_test_acc*100
+def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters):
     dict_exp['test_accs'][experiment] = test_acc*100
     dict_exp['thetas'][experiment] = sess.run(model.theta, feed_dict=test_dict)
     dict_exp['iterations'][experiment] = num_iters
@@ -55,12 +52,10 @@ def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, n
     return dict_exp
 
 
-def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, avg_adv_test_acc, max_num_training_steps):
+def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, max_num_training_steps):
 
     avg_test_acc = avg_test_acc / num_experiments
-    avg_adv_test_acc = avg_adv_test_acc / num_experiments
     print('  Average testing accuracy {:.4}'.format(avg_test_acc * 100))
-    print('  Average Adversarial testing accuracy {:.4}'.format(avg_adv_test_acc * 100))
     print('  Theta values', dict_exp['thetas'])
     # print('  individual accuracies: \n', test_accs)
     std = np.array([float(k) for k in dict_exp['test_accs']]).std()
@@ -82,12 +77,12 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         writer = csv.writer(file)
         if args.model == "ff":
             writer.writerow(
-                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, avg_adv_test_acc, dict_exp['test_accs'], std,
+                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
                 dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, w3_stability, logit_stability,
                 gini_stability, args.l2, args.l0])
         elif args.model == "cnn":
             writer.writerow(
-                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, avg_adv_test_acc, dict_exp['test_accs'], std,
+                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
                  dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], conv11_stability, conv12_stability, conv21_stability,
                  conv22_stability, conv31_stability, conv32_stability, fc1_stability, fc2_stability, logit_stability,
                  gini_stability, args.l2, args.l0, args.robust])

@@ -28,7 +28,6 @@ def create_dict(args, train_shape, test_size):
     dict_exp['W3_acc'] = np.zeros((config['num_experiments'], args.l2_size * 10))
     dict_exp['preds'] = np.zeros((config['num_experiments'], test_size[0]))
     dict_exp['test_accs'] = np.zeros(config['num_experiments'])
-    dict_exp['adv_test_accs'] = np.zeros(config['num_experiments'])
     dict_exp['thetas'] = np.zeros(config['num_experiments'])
     dict_exp['iterations'] = np.zeros(config['num_experiments'])
 

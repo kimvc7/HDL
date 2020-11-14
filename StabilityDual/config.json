@@ -5,7 +5,7 @@
   "_comment": "===== TRAINING CONFIGURATION =====",
   "random_seed": 4557077,
   "max_num_training_steps": 50000,
-  "num_output_steps": 5000,
+  "num_output_steps": 1000,
   "num_summary_steps": 100,
   "num_checkpoint_steps": 300,
   "subset_ratio": 0.8,
@@ -15,7 +15,7 @@
   "batch_size": 64,
   "initial_learning_rate": 1e-3,
   "constant_learning_rate": 1e-4,
-  "num_experiments": 10,
+  "num_experiments": 1,
 
   "_comment": "=====ADVERSARIAL EXAMPLES CONFIGURATION=====",
   "k": 40,

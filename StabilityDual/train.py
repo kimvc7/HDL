@@ -160,7 +160,6 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
   #Initializing loop variables.
   avg_test_acc = 0
-  avg_adv_test_acc = 0
   num_experiments = config['num_experiments']
   dict_exp = utils_model.create_dict(args, data.train.images.shape, data.test.images.shape)
 
@@ -181,12 +180,11 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
             nat_dict = {model.x_input: x_batch,
                         model.y_input: y_batch}
 
-            x_batch_adv = attack.perturb(x_batch, y_batch, sess)
-            adv_dict = {model.x_input: x_batch_adv, model.y_input: y_batch}
     
             # Output
             if ii % num_output_steps == 0:
-              val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, ii, args, adv_dict)
+
+              val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, ii, args)
               #Validation
               if val_acc > best_val_acc:
                 print("New best val acc is", val_acc)
@@ -194,13 +192,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
                 num_iters = ii
                 test_acc = sess.run(model.accuracy, feed_dict=test_dict)
 
-                #Attacks for testing set
-                x_batch_adv_test = attack.perturb(data.test.images, data.test.labels, sess)
-                adv_test_dict = {model.x_input: x_batch_adv_test, model.y_input: data.test.labels}
-                adv_test_acc = sess.run(model.accuracy, feed_dict=adv_test_dict)
-
                 print("New best test acc is", test_acc)
-                print("New best adv test acc is", adv_test_acc)
                 dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)
 
               if ii != 0:
@@ -216,8 +208,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
     
     
           #Output test results
-          utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters, adv_test_acc)
+          utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters)
           avg_test_acc += test_acc
-          avg_adv_test_acc += adv_test_acc
 
-  utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, avg_adv_test_acc, max_num_training_steps)
+  utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, max_num_training_steps)

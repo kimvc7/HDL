@@ -13,7 +13,7 @@ from l0_regularization import *#get_l0_norm
 
 
 class Model(object):
-  def __init__(self, num_classes, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0, eps=0, reg_stability = 0):
+  def __init__(self, num_classes, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, eps=0, reg_stability = 0):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
