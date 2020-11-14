@@ -18,6 +18,8 @@ import itertools
 import utils_model
 import utils_print
 
+from pgd_attack import LinfPGDAttack
+
 import argparse
 
 
@@ -115,7 +117,8 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
   if args.model == "ff":
       data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
       num_features = data.train.images.shape[1]
-      model = Model(num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.robust, args.reg_stability)
+      num_classes = np.unique(data.train.labels).shape[0]
+      model = Model(num_classes, num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.robust, args.reg_stability)
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
       if args.l0 > 0:
           var_list = [model.W1, model.W1_masked, model.b1, model.W2, model.W2_masked, model.b2, model.W3, model.W3_masked, model.b3]
@@ -131,6 +134,14 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
       model = Model(num_subsets, batch_size, args.cnn_size, args.fc_size, subset_ratio, pixels_x, pixels_y, num_channels, args.dropout, args.l2, theta)
 
 
+  #Set up attack class for evaluating robustness.
+  attack = LinfPGDAttack(model, 
+                       args.robust,
+                       config['k'],
+                       config['a'],
+                       config['random_start'],
+                       config['loss_func'])
+
   #Returns the right loss depending on MC or dual or nothing
   loss = utils_model.get_loss(model, args)
 
@@ -140,6 +151,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
   test_dict = {model.x_input: data.test.images[:testing_size],
                   model.y_input: data.test.labels[:testing_size].reshape(-1)}
 
+
   # Setting up the optimizer
   if args.stable and not args.MC:
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss+ model.regularizer, global_step=global_step)
@@ -148,6 +160,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
   #Initializing loop variables.
   avg_test_acc = 0
+  avg_adv_test_acc = 0
   num_experiments = config['num_experiments']
   dict_exp = utils_model.create_dict(args, data.train.images.shape, data.test.images.shape)
 
@@ -167,17 +180,27 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
                 y_batch = y_batch.reshape(-1)
             nat_dict = {model.x_input: x_batch,
                         model.y_input: y_batch}
+
+            x_batch_adv = attack.perturb(x_batch, y_batch, sess)
+            adv_dict = {model.x_input: x_batch_adv, model.y_input: y_batch}
     
             # Output
             if ii % num_output_steps == 0:
-              val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, ii, args)
+              val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, ii, args, adv_dict)
               #Validation
               if val_acc > best_val_acc:
                 print("New best val acc is", val_acc)
                 best_val_acc = val_acc
                 num_iters = ii
                 test_acc = sess.run(model.accuracy, feed_dict=test_dict)
+
+                #Attacks for testing set
+                x_batch_adv_test = attack.perturb(data.test.images, data.test.labels, sess)
+                adv_test_dict = {model.x_input: x_batch_adv_test, model.y_input: data.test.labels}
+                adv_test_acc = sess.run(model.accuracy, feed_dict=adv_test_dict)
+
                 print("New best test acc is", test_acc)
+                print("New best adv test acc is", adv_test_acc)
                 dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)
 
               if ii != 0:
@@ -193,7 +216,8 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
     
     
           #Output test results
-          utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters)
+          utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters, adv_test_acc)
           avg_test_acc += test_acc
+          avg_adv_test_acc += adv_test_acc
 
-  utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, max_num_training_steps)
+  utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, avg_adv_test_acc, max_num_training_steps)

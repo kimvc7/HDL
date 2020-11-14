@@ -13,7 +13,7 @@ from l0_regularization import *#get_l0_norm
 
 
 class Model(object):
-  def __init__(self, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0, eps=0, reg_stability = 0):
+  def __init__(self, num_classes, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 0, l2 = 0, l0 = 0, eps=0, reg_stability = 0):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
@@ -53,8 +53,8 @@ class Model(object):
       self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
       self.h2 = tf.nn.dropout(self.h2, self.dropout)
 
-    self.W3 = self._weight_variable([l2_size, 10])
-    self.b3 = self._bias_variable([10])
+    self.W3 = self._weight_variable([l2_size, num_classes])
+    self.b3 = self._bias_variable([num_classes])
 
     if l0 > 0:
       self.mask_W3 = get_l0_mask(self.W3, "W3")
@@ -78,7 +78,7 @@ class Model(object):
     self.nom_exponent = pre_softmax_t -  tf.gather_nd(pre_softmax_t, indices)
 
     sum_exps = 0
-    for i in range(10):
+    for i in range(num_classes):
       grad = tf.gradients(self.nom_exponent[i], self.x_input)
       exponent = eps*tf.reduce_sum(tf.abs(grad[0]), axis=1) + self.nom_exponent[i]
       sum_exps+=tf.exp(exponent)
