@@ -2,8 +2,9 @@ from datetime import datetime
 import numpy as np
 import csv
 from utils import total_gini
+import tensorflow.compat.v1 as tf
 
-def print_metrics(sess, model, nat_dict, val_dict, ii, args):
+def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step):
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
     val_acc = sess.run(model.accuracy, feed_dict=val_dict)
     nat_xent = sess.run(model.xent, feed_dict=nat_dict)
@@ -41,6 +42,20 @@ def print_metrics(sess, model, nat_dict, val_dict, ii, args):
     # print('    W1 features', sum(sess.run(model.W1).reshape(-1) > 1e-12))
     # print('    W2 features', sum(sess.run(model.W2).reshape(-1) > 1e-12))
     # print('    W3 features', sum(sess.run(model.W3).reshape(-1) > 1e-12))
+
+    summary1 = tf.Summary(value=[tf.Summary.Value(tag='TrainAcc', simple_value=nat_acc), ])
+    summary2 = tf.Summary(value=[tf.Summary.Value(tag='ValAcc', simple_value=val_acc), ])
+    summary3 = tf.Summary(value=[tf.Summary.Value(tag='TrainXent', simple_value=nat_xent), ])
+    summary4 = tf.Summary(value=[tf.Summary.Value(tag='DualXent', simple_value=dual_xent), ])
+    # summary4 = tf.Summary(value=[tf.Summary.Value(tag='Hidden_weights', simple_value=tf.summary.histogram('Hidden_weights', sess.run(model.W3).reshape(-1))),])
+    # summary4 = tf.summary.histogram('Hidden_weights', model.W3.value())
+    summary_writer.add_summary(summary1, global_step.eval(sess))
+    summary_writer.add_summary(summary2, global_step.eval(sess))
+    summary_writer.add_summary(summary3, global_step.eval(sess))
+    summary_writer.add_summary(summary4, global_step.eval(sess))
+    # summary_writer.add_text('args', str(args), global_step.eval(sess))
+    summary5 = sess.run(model.summary, feed_dict=test_dict)
+    summary_writer.add_summary(summary5, global_step.eval(sess))
 
     return val_acc
 

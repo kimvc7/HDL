@@ -34,7 +34,6 @@ parser.add_argument("--ratio_range", type=float, nargs='+', default=[0.8],
 parser.add_argument("--model", "-m", type=str, required=True, choices=["ff", "cnn"],
                             help="model type, either ff or cnn")
 
-
 parser.add_argument("--stable", action="store_true",
                             help="stable version")
 
@@ -162,9 +161,14 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
   avg_test_acc = 0
   num_experiments = config['num_experiments']
   dict_exp = utils_model.create_dict(args, data.train.images.shape, data.test.images.shape)
+  output_dir = 'outputs/logs/' + str(args.data_set) + '/' + str(datetime.now())
+  if not os.path.exists(output_dir):
+      os.makedirs(output_dir)
 
   for experiment in range(num_experiments):
     print("Experiment", experiment)
+    summary_writer = tf.summary.FileWriter(
+        output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2))
     
     with tf.Session() as sess:
           sess.run(tf.global_variables_initializer())
@@ -184,7 +188,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
             # Output
             if ii % num_output_steps == 0:
 
-              val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, ii, args)
+              val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step)
               #Validation
               if val_acc > best_val_acc:
                 print("New best val acc is", val_acc)
