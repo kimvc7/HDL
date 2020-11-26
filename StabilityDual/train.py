@@ -120,7 +120,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
       model = Model(num_classes, num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.robust, args.reg_stability)
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
       if args.l0 > 0:
-          var_list = [model.W1, model.W1_masked, model.b1, model.W2, model.W2_masked, model.b2, model.W3, model.W3_masked, model.b3]
+          var_list = [model.W1, model.log_a_W1, model.b1, model.log_a_W2, model.W2, model.b2, model.W3, model.log_a_W3, model.b3]
   elif args.model == "cnn":
       data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=False, seed=seed)
       print(data.train.images.shape)
@@ -153,9 +153,9 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
   # Setting up the optimizer
   if args.stable and not args.MC:
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss+ model.regularizer, global_step=global_step)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss + model.regularizer, global_step=global_step)
   else:
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss+ model.regularizer, global_step=global_step, var_list=var_list)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss + model.regularizer, global_step=global_step, var_list=var_list)
 
   #Initializing loop variables.
   avg_test_acc = 0
@@ -169,7 +169,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
     print("Experiment", experiment)
     summary_writer = tf.summary.FileWriter(
         output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2))
-    
+
     with tf.Session() as sess:
           sess.run(tf.global_variables_initializer())
           training_time = 0.0

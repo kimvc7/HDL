@@ -7,10 +7,13 @@ tf.disable_v2_behavior()
 
 import numpy as np
 import json
+import math
 
-from l0_regularization import *#get_l0_norm
+#from l0_regularization import *#get_l0_norm
 
-
+GAMMA = -0.1
+ZETA = 1.1
+BETA = 2 / 3
 
 class Model(object):
   def __init__(self, num_classes, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, eps=0, reg_stability = 0):
@@ -22,6 +25,7 @@ class Model(object):
     self.y_input = tf.placeholder(tf.int64, shape = [None])
     self.eps =  eps
 
+
     # Stability dual variable
     self.theta = tf.Variable(tf.constant(0.1))
 
@@ -29,40 +33,45 @@ class Model(object):
     self.W1 = self._weight_variable([num_features, l1_size])
     self.b1 = self._bias_variable([l1_size])
 
+    # For L0 reg
+    # initialize log a from normal distribution
+    #### TODO ####
+    self.log_a_W1 = tf.Variable(tf.random_normal(self.W1.get_shape(), mean=0.0, stddev=0.01))  # , name="log_a_W1")
+
     if l0 > 0:
+      self.W1, self.l0_norm_W1 = self.get_l0_norm_full(self.W1, self.log_a_W1, "W1")
 
-      #self.mask_W1 = get_l0_mask(self.W1, "W1")
-      self.W1_masked = tf.Variable(tf.zeros(self.W1.get_shape()), name="W1_m")#self._weight_variable([num_features, l1_size])
-      self.W1_masked, self.l0_norm_W1 = get_l0_norm_full(self.W1, "W1")
-      #self.W1 = self.W1 + self.W1_masked
-      self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1_masked) + self.b1)
-    else:
+    #### END TODO ####
 
-      self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
-      self.h1 = tf.nn.dropout(self.h1, self.dropout)
+    self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
+    self.h1 = tf.nn.dropout(self.h1, self.dropout)
 
     self.W2 = self._weight_variable([l1_size, l2_size])
     self.b2 = self._bias_variable([l2_size])
+    #self.log_a_W2 = self._weight_variable([l1_size, l2_size])#tf.get_variable(tf.random_normal(self.W2.get_shape(), mean=0.0, stddev=0.01))#, name="log_a_W2")
 
+    #### TODO ####
+    self.log_a_W2 = tf.Variable(tf.random_normal(self.W2.get_shape(), mean=0.0, stddev=0.01))
 
     if l0 > 0:
-      self.mask_W2 = get_l0_mask(self.W2, "W2")
-      self.W2_masked, self.l0_norm_W2 = get_l0_norm_full(self.W2, "W2")
-      self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2_masked) + self.b2)
-    else:
-      self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
-      self.h2 = tf.nn.dropout(self.h2, self.dropout)
+      self.W2, self.l0_norm_W2 = self.get_l0_norm_full(self.W2, self.log_a_W2, "W2")
+
+    #### END TODO ####
+
+    self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
+    self.h2 = tf.nn.dropout(self.h2, self.dropout)
 
     self.W3 = self._weight_variable([l2_size, num_classes])
     self.b3 = self._bias_variable([num_classes])
 
-    if l0 > 0:
-      self.mask_W3 = get_l0_mask(self.W3, "W3")
-      self.W3_masked, self.l0_norm_W3 = get_l0_norm_full(self.W3, "W3")
-      self.pre_softmax = tf.matmul(self.h2, self.W3_masked) + self.b3
+    #### TODO ####
+    self.log_a_W3 = tf.Variable(tf.random_normal(self.W3.get_shape(), mean=0.0, stddev=0.01))#, name="log_a_W3")
 
-    else:
-      self.pre_softmax = tf.matmul(self.h2, self.W3) + self.b3
+    if l0 > 0:
+      self.W3, self.l0_norm_W3 = self.get_l0_norm_full(self.W3, self.log_a_W3, "W3")
+    #### END TODO ####
+
+    self.pre_softmax = tf.matmul(self.h2, self.W3) + self.b3
 
     #Prediction 
     y_xent = tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -106,13 +115,13 @@ class Model(object):
     self.MC_xent = max_subset_xent
 
     #Compute regularizer
-    #self.regularizer = #l2*(tf.reduce_sum(tf.square(self.b2))+ tf.reduce_sum(tf.square(self.b1)) +
-                        #tf.reduce_sum(tf.square(self.b3)))#+tf.reduce_sum(tf.square(self.W1)) +
-                           #tf.reduce_sum(tf.square(self.W2)+tf.reduce_sum(tf.square(self.W3))))
     self.regularizer = l2*(tf.reduce_sum(tf.square(self.W1)) + tf.reduce_sum(tf.square(self.W2))
                               + tf.reduce_sum(tf.square(self.W3)))
+    #### TODO ####
     if l0 > 0:
       self.regularizer = self.regularizer + l0 * (self.l0_norm_W1 + self.l0_norm_W2 + self.l0_norm_W3)
+
+    #### END TODO ####
 
     if reg_stability > 0 :
       self.regularizer = self.regularizer + reg_stability * tf.math.reduce_std(self.h2)
@@ -146,3 +155,30 @@ class Model(object):
       initial = tf.constant(0.1, shape = shape)
       return tf.Variable(initial)
 
+#### TODO ####
+  def get_l0_norm_full(self, x, log_a, varname):
+
+    shape = x.get_shape()
+
+    # sample u
+    u = tf.random_uniform(shape)
+
+    # compute hard concrete distribution
+    s = tf.sigmoid((tf.log(u) - tf.log(1.0 - u) + log_a) / BETA)
+
+    # stretch hard concrete distribution
+    s_bar = s * (ZETA - GAMMA) + GAMMA
+
+    # compute differentiable l0 norm
+    l0_norm = tf.reduce_sum(tf.sigmoid(log_a - BETA * math.log(-GAMMA / ZETA)))#, name="l0_norm_" + varname)
+
+    # get mask for calculating sparse version of tensor
+    mask = hard_sigmoid(s_bar)
+
+    # return masked version of tensor and l0 norm
+    return tf.Variable(tf.multiply(x, mask)), l0_norm
+
+def hard_sigmoid(x):
+    return tf.minimum(tf.maximum(x, tf.zeros_like(x)), tf.ones_like(x))
+
+#### END TODO ####

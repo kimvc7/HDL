@@ -3,6 +3,7 @@ import numpy as np
 import csv
 from utils import total_gini
 import tensorflow.compat.v1 as tf
+import json
 
 def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step):
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
@@ -29,10 +30,12 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
         if args.stable:
             print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
 
-    if args.l0 > 0 and args.model == "ff":
-        print('    W1_masked features', sum(sess.run(model.W1_masked).reshape(-1) > 0))
-        print('    W2_masked features', sum(sess.run(model.W2_masked).reshape(-1) > 0))
-        print('    W3_masked features', sum(sess.run(model.W3_masked).reshape(-1) > 0))
+    if args.model == "ff":
+        print('    Non zero W1 features percentage', sum(sess.run(model.W1).reshape(-1) > 0)/sess.run(model.W1).reshape(-1).shape)
+        print('    Non zero W2 features percentage', sum(sess.run(model.W2).reshape(-1) > 0)/sess.run(model.W2).reshape(-1).shape)
+        print('    Non zero W3 features percentage', sum(sess.run(model.W3).reshape(-1) > 0)/sess.run(model.W3).reshape(-1).shape)
+        print('    Debugging: sum of W3', sum(sess.run(model.W3)))
+
     if args.model == "ff":
         regularizer = sess.run(model.regularizer, feed_dict=nat_dict)
         print('    Regularizer', regularizer)
@@ -47,6 +50,11 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
     summary2 = tf.Summary(value=[tf.Summary.Value(tag='ValAcc', simple_value=val_acc), ])
     summary3 = tf.Summary(value=[tf.Summary.Value(tag='TrainXent', simple_value=nat_xent), ])
     summary4 = tf.Summary(value=[tf.Summary.Value(tag='DualXent', simple_value=dual_xent), ])
+    #tensor = tf.constant(json.dumps(vars(args), indent=2))
+    #tensor = tf.constant(vars(args).keys())
+    #print(vars(args).keys())
+    #summary = tf.summary.text("Args", tensor)
+    #summary_writer.add_summary(summary, global_step.eval(sess))
     # summary4 = tf.Summary(value=[tf.Summary.Value(tag='Hidden_weights', simple_value=tf.summary.histogram('Hidden_weights', sess.run(model.W3).reshape(-1))),])
     # summary4 = tf.summary.histogram('Hidden_weights', model.W3.value())
     summary_writer.add_summary(summary1, global_step.eval(sess))

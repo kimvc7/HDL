@@ -5,7 +5,7 @@ tf.disable_v2_behavior()
 
 GAMMA = -0.1
 ZETA = 1.1
-BETA = 1e-5
+BETA = 2/3
 
 def hard_sigmoid(x):
     return tf.minimum(tf.maximum(x,tf.zeros_like(x)),tf.ones_like(x))
