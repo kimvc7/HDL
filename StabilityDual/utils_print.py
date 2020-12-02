@@ -31,12 +31,11 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
             print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
 
     if args.model == "ff":
-        print('    Non zero W1 features percentage', sum(sess.run(model.W1).reshape(-1) > 0)/sess.run(model.W1).reshape(-1).shape)
-        print('    Non zero W2 features percentage', sum(sess.run(model.W2).reshape(-1) > 0)/sess.run(model.W2).reshape(-1).shape)
-        print('    Non zero W3 features percentage', sum(sess.run(model.W3).reshape(-1) > 0)/sess.run(model.W3).reshape(-1).shape)
-        print('    Debugging: sum of W3', sum(sess.run(model.W3)))
-
-    if args.model == "ff":
+        print('    Non zero W1 features percentage', sum(sess.run(model.W1).reshape(-1) > 0)/sess.run(model.W1).reshape(-1).shape[0])
+        print('    Non zero W2 features percentage', sum(sess.run(model.W2).reshape(-1) > 0)/sess.run(model.W2).reshape(-1).shape[0])
+        print('    Non zero W3 features percentage', sum(sess.run(model.W3).reshape(-1) > 0)/sess.run(model.W3).reshape(-1).shape[0])
+        #print('    Debugging: sum of W3', sum(sess.run(model.W3)))
+        #print('    Debugging: sum of log_a_W3', sum(sess.run(model.log_a_W3)))
         regularizer = sess.run(model.regularizer, feed_dict=nat_dict)
         print('    Regularizer', regularizer)
 
@@ -82,16 +81,20 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
     print('  Theta values', dict_exp['thetas'])
     # print('  individual accuracies: \n', test_accs)
     std = np.array([float(k) for k in dict_exp['test_accs']]).std()
-    print('Test Accuracy std {:.2}'.format(np.array([float(k) for k in dict_exp['test_accs']]).std()))
-    print("Logits std", np.mean(np.mean(np.std(dict_exp['logits_acc'], axis=0), axis=0)))
+    print('  Test Accuracy std {:.2}'.format(np.array([float(k) for k in dict_exp['test_accs']]).std()))
+    print("  Logits std", np.mean(np.mean(np.std(dict_exp['logits_acc'], axis=0), axis=0)))
     logit_stability = np.mean(np.std(dict_exp['logits_acc'], axis=0), axis=0)
     gini_stability = total_gini(dict_exp['preds'].transpose())
-    print("Gini stability", gini_stability)
-
-
+    print("  Gini stability", gini_stability)
 
     if args.model == "ff":
         w1_stability, w2_stability, w3_stability = print_layer_stability_ff(dict_exp)
+        W1_non_zero = np.mean(dict_exp['W1_non_zero'])
+        W2_non_zero = np.mean(dict_exp['W2_non_zero'])
+        W3_non_zero = np.mean(dict_exp['W3_non_zero'])
+        print(' W1 non zero percentage', W1_non_zero)
+        print(' W2 non zero percentage', W2_non_zero)
+        print(' W3 non zero percentage', W3_non_zero)
     elif args.model == "cnn":
         conv11_stability, conv12_stability, conv21_stability, conv22_stability, conv31_stability, conv32_stability, fc1_stability, fc2_stability = print_layer_stability_cnn(dict_exp)
 
@@ -102,7 +105,7 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
             writer.writerow(
                 [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
                 dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, w3_stability, logit_stability,
-                gini_stability, args.l2, args.l0])
+                gini_stability, args.l2, args.l0, W1_non_zero, W2_non_zero, W3_non_zero])
         elif args.model == "cnn":
             writer.writerow(
                 [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,

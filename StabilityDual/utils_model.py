@@ -30,6 +30,9 @@ def create_dict(args, train_shape, test_size):
     dict_exp['test_accs'] = np.zeros(config['num_experiments'])
     dict_exp['thetas'] = np.zeros(config['num_experiments'])
     dict_exp['iterations'] = np.zeros(config['num_experiments'])
+    dict_exp['W1_non_zero'] = np.zeros(config['num_experiments'])
+    dict_exp['W2_non_zero'] = np.zeros(config['num_experiments'])
+    dict_exp['W3_non_zero'] = np.zeros(config['num_experiments'])
 
     if args.model == "cnn":
         pixels_x = train_shape[1]
@@ -54,6 +57,10 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
         dict_exp['W1_acc'][experiment] = sess.run(model.W1).reshape(-1)
         dict_exp['W2_acc'][experiment] = sess.run(model.W2).reshape(-1)
         dict_exp['W3_acc'][experiment] = sess.run(model.W3).reshape(-1)
+
+        dict_exp['W1_non_zero'] = sum(sess.run(model.W1).reshape(-1) > 0) / sess.run(model.W1).reshape(-1).shape[0]
+        dict_exp['W2_non_zero'] = sum(sess.run(model.W2).reshape(-1) > 0) / sess.run(model.W2).reshape(-1).shape[0]
+        dict_exp['W3_non_zero'] = sum(sess.run(model.W3).reshape(-1) > 0) / sess.run(model.W3).reshape(-1).shape[0]
 
     elif args.model == "cnn":
 
