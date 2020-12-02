@@ -4,6 +4,10 @@ import csv
 from utils import total_gini
 import tensorflow.compat.v1 as tf
 import json
+from pgd_attack import LinfPGDAttack
+
+with open('config.json') as config_file:
+    config = json.load(config_file)
 
 def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step):
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
@@ -25,7 +29,7 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
         print('    Stable xent upper bound with dual {:.4}'.format(dual_xent))
         print('    Stable Xent lower bound with Monte Carlo {:.4}'.format(MC_xent))
 
-    if args.robust > 0 and args.model == "ff":
+    if args.robust > 0 :
         print('    Robust Xent {:.4}'.format(robust_xent))
         if args.stable:
             print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
@@ -61,23 +65,35 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
     summary_writer.add_summary(summary3, global_step.eval(sess))
     summary_writer.add_summary(summary4, global_step.eval(sess))
     # summary_writer.add_text('args', str(args), global_step.eval(sess))
-    summary5 = sess.run(model.summary, feed_dict=test_dict)
-    summary_writer.add_summary(summary5, global_step.eval(sess))
+    if args.model == "ff":
+        summary5 = sess.run(model.summary, feed_dict=test_dict)
+        summary_writer.add_summary(summary5, global_step.eval(sess))
 
     return val_acc
 
 def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters):
     dict_exp['test_accs'][experiment] = test_acc*100
-    dict_exp['thetas'][experiment] = sess.run(model.theta, feed_dict=test_dict)
+    #dict_exp['thetas'][experiment] = sess.run(model.theta, feed_dict=test_dict)
     dict_exp['iterations'][experiment] = num_iters
 
     return dict_exp
+
+def update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp):
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        attack = LinfPGDAttack(best_model, args.robust, config['k'], config['a'], 
+            config['random_start'], config['loss_func'])
+
+        x_test_adv = attack.perturb(x_test, y_test, sess)
+        adv_dict = {best_model.x_input: x_test_adv, best_model.y_input: y_test}
+        dict_exp['adv_test_accs'][experiment] = sess.run(best_model.accuracy, feed_dict=adv_dict)
 
 
 def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, max_num_training_steps):
 
     avg_test_acc = avg_test_acc / num_experiments
     print('  Average testing accuracy {:.4}'.format(avg_test_acc * 100))
+    print('  Adv testing accuracies', dict_exp['adv_test_accs'])
     print('  Theta values', dict_exp['thetas'])
     # print('  individual accuracies: \n', test_accs)
     std = np.array([float(k) for k in dict_exp['test_accs']]).std()
@@ -103,9 +119,9 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         writer = csv.writer(file)
         if args.model == "ff":
             writer.writerow(
-                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
-                dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, w3_stability, logit_stability,
-                gini_stability, args.l2, args.l0, W1_non_zero, W2_non_zero, W3_non_zero])
+                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], 
+                dict_exp['adv_test_accs'], std, dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, 
+                w3_stability, logit_stability, gini_stability, args.l2, args.l0, W1_non_zero, W2_non_zero, W3_non_zero])
         elif args.model == "cnn":
             writer.writerow(
                 [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,

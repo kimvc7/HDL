@@ -14,9 +14,10 @@ import math
 GAMMA = -0.1
 ZETA = 1.1
 BETA = 2 / 3
+W = [[None, None], [None, None], [None, None], None, [None, None, None]]
 
 class Model(object):
-  def __init__(self, num_classes, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, eps=0, reg_stability = 0):
+  def __init__(self, num_classes, num_subsets, batch_size, l1_size, l2_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, eps=0, reg_stability = 0, weights = W):
     self.subset_size = int(subset_ratio*batch_size)
     self.num_subsets = num_subsets
     self.dropout = dropout
@@ -24,19 +25,24 @@ class Model(object):
     self.x_input = tf.placeholder(tf.float32, shape = [None, num_features])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
     self.eps =  eps
+    W_1, b_1 = weights[0]
+    W_2, b_2 = weights[1]
+    W_3, b_3 = weights[2]
+    theta = weights[3]
+    log_a1, log_a2, log_a3 = weights[4]
 
 
     # Stability dual variable
-    self.theta = tf.Variable(tf.constant(0.1))
+    self.theta = self._bias_variable([], theta)
 
     # Perceptron's fully connected layer.
-    self.W1 = self._weight_variable([num_features, l1_size])
-    self.b1 = self._bias_variable([l1_size])
+    self.W1 = self._weight_variable([num_features, l1_size], W_1)
+    self.b1 = self._bias_variable([l1_size], b_1)
 
     # For L0 reg
     # initialize log a from normal distribution
     #### TODO ####
-    self.log_a_W1 = tf.Variable(tf.random_normal(self.W1.get_shape(), mean=0.0, stddev=0.01))  # , name="log_a_W1")
+    self.log_a_W1 = self._log_a_variable(self.W1.get_shape(), log_a1) # , name="log_a_W1")
 
     if l0 > 0:
       self.W1_masked, self.l0_norm_W1 = self.get_l0_norm_full(self.W1, self.log_a_W1, "W1")
@@ -47,12 +53,12 @@ class Model(object):
       self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
     self.h1 = tf.nn.dropout(self.h1, self.dropout)
 
-    self.W2 = self._weight_variable([l1_size, l2_size])
-    self.b2 = self._bias_variable([l2_size])
+    self.W2 = self._weight_variable([l1_size, l2_size], W_2)
+    self.b2 = self._bias_variable([l2_size], b_2)
     #self.log_a_W2 = self._weight_variable([l1_size, l2_size])#tf.get_variable(tf.random_normal(self.W2.get_shape(), mean=0.0, stddev=0.01))#, name="log_a_W2")
 
     #### TODO ####
-    self.log_a_W2 = tf.Variable(tf.random_normal(self.W2.get_shape(), mean=0.0, stddev=0.01))
+    self.log_a_W2 = self._log_a_variable(self.W2.get_shape(), log_a2)
 
     if l0 > 0:
       self.W2_masked, self.l0_norm_W2 = self.get_l0_norm_full(self.W2, self.log_a_W2, "W2")
@@ -63,11 +69,11 @@ class Model(object):
       self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
     self.h2 = tf.nn.dropout(self.h2, self.dropout)
 
-    self.W3 = self._weight_variable([l2_size, num_classes])
-    self.b3 = self._bias_variable([num_classes])
+    self.W3 = self._weight_variable([l2_size, num_classes], W_3)
+    self.b3 = self._bias_variable([num_classes], b_3)
 
     #### TODO ####
-    self.log_a_W3 = tf.Variable(tf.random_normal(self.W3.get_shape(), mean=0.0, stddev=0.01))#, name="log_a_W3")
+    self.log_a_W3 = self._log_a_variable(self.W3.get_shape(), log_a3)#, name="log_a_W3")
 
     if l0 > 0:
       self.W3_masked, self.l0_norm_W3 = self.get_l0_norm_full(self.W3, self.log_a_W3, "W3")
@@ -155,14 +161,31 @@ class Model(object):
 
 
   @staticmethod
-  def _weight_variable(shape):
-      initial = tf.glorot_uniform_initializer()
-      return tf.get_variable(shape=shape, initializer=initial, name=str(np.random.randint(1e10)))
+  def _weight_variable(shape, initial = None):
+      if initial is None:
+        W0 = tf.glorot_uniform_initializer()
+        return tf.get_variable(shape=shape, initializer=W0, name=str(np.random.randint(1e10)))
+      else:
+        W0 = tf.constant(initial, shape = shape, dtype=tf.float32)
+        return tf.Variable(W0)
 
   @staticmethod
-  def _bias_variable(shape):
-      initial = tf.constant(0.1, shape = shape)
-      return tf.Variable(initial)
+  def _bias_variable(shape, initial = None):
+      if initial is None:
+        b0 = tf.constant(0.1, shape = shape)
+        return tf.Variable(b0)
+      else:
+        b0 = tf.constant(initial, shape = shape, dtype=tf.float32)
+        return tf.Variable(b0)
+
+  @staticmethod
+  def _log_a_variable(shape, initial = None):
+      if initial is None:
+        a0 = tf.Variable(tf.random_normal(shape, mean=0.0, stddev=0.01))
+        return tf.Variable(a0)
+      else:
+        a0 = tf.constant(initial, shape = shape, dtype=tf.float32)
+        return tf.Variable(a0)
 
 #### TODO ####
   def get_l0_norm_full(self, x, log_a, varname):

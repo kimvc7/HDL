@@ -1,5 +1,7 @@
 import numpy as np
 import json
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 with open('config.json') as config_file:
     config = json.load(config_file)
@@ -20,12 +22,18 @@ def get_loss(model, args):
     return loss
 
 
-def create_dict(args, train_shape, test_size):
+def create_dict(args, num_classes, train_shape, test_size):
     dict_exp = {}
-    dict_exp['logits_acc'] = np.zeros((config['num_experiments'], test_size[0], 10))
+    dict_exp['logits_acc'] = np.zeros((config['num_experiments'], test_size[0], num_classes))
     dict_exp['W1_acc'] = np.zeros((config['num_experiments'], train_shape[1] * args.l1_size))
     dict_exp['W2_acc'] = np.zeros((config['num_experiments'], args.l1_size * args.l2_size))
-    dict_exp['W3_acc'] = np.zeros((config['num_experiments'], args.l2_size * 10))
+    dict_exp['W3_acc'] = np.zeros((config['num_experiments'], args.l2_size * num_classes))
+    dict_exp['b1_acc'] = np.zeros((config['num_experiments'], args.l1_size))
+    dict_exp['b2_acc'] = np.zeros((config['num_experiments'], args.l2_size))
+    dict_exp['b3_acc'] = np.zeros((config['num_experiments'], num_classes))
+    dict_exp['log_a1']= np.zeros((config['num_experiments'], train_shape[1] * args.l1_size))
+    dict_exp['log_a2'] = np.zeros((config['num_experiments'], args.l1_size * args.l2_size))
+    dict_exp['log_a3'] = np.zeros((config['num_experiments'], args.l2_size * num_classes))
     dict_exp['preds'] = np.zeros((config['num_experiments'], test_size[0]))
     dict_exp['test_accs'] = np.zeros(config['num_experiments'])
     dict_exp['thetas'] = np.zeros(config['num_experiments'])
@@ -33,6 +41,8 @@ def create_dict(args, train_shape, test_size):
     dict_exp['W1_non_zero'] = np.zeros(config['num_experiments'])
     dict_exp['W2_non_zero'] = np.zeros(config['num_experiments'])
     dict_exp['W3_non_zero'] = np.zeros(config['num_experiments'])
+    dict_exp['adv_test_accs'] = np.zeros(config['num_experiments'])
+
 
     if args.model == "cnn":
         pixels_x = train_shape[1]
@@ -53,10 +63,18 @@ def create_dict(args, train_shape, test_size):
 
 def update_dict(dict_exp, args, sess, model, test_dict, experiment):
 
+    dict_exp['thetas'][experiment] = sess.run(model.theta)
+
     if args.model == "ff":
         dict_exp['W1_acc'][experiment] = sess.run(model.W1).reshape(-1)
         dict_exp['W2_acc'][experiment] = sess.run(model.W2).reshape(-1)
         dict_exp['W3_acc'][experiment] = sess.run(model.W3).reshape(-1)
+        dict_exp['b1_acc'][experiment] = sess.run(model.b1)
+        dict_exp['b2_acc'][experiment] = sess.run(model.b2)
+        dict_exp['b3_acc'][experiment] = sess.run(model.b3)
+        dict_exp['log_a1'][experiment] = sess.run(model.log_a_W1).reshape(-1)
+        dict_exp['log_a2'][experiment] = sess.run(model.log_a_W2).reshape(-1)
+        dict_exp['log_a3'][experiment] = sess.run(model.log_a_W3).reshape(-1)
 
         dict_exp['W1_non_zero'] = sum(sess.run(model.W1).reshape(-1) > 0) / sess.run(model.W1).reshape(-1).shape[0]
         dict_exp['W2_non_zero'] = sum(sess.run(model.W2).reshape(-1) > 0) / sess.run(model.W2).reshape(-1).shape[0]
@@ -76,4 +94,38 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
     dict_exp['logits_acc'][experiment] = sess.run(model.logits, feed_dict=test_dict)
     dict_exp['preds'][experiment] = sess.run(model.y_pred, feed_dict=test_dict)
 
+
     return dict_exp
+
+def get_best_model(dict_exp, experiment, args, num_classes, num_subsets, batch_size, subset_ratio, num_features, theta, num_channels, pixels_x, pixels_y):
+    if args.model == "ff":
+        W1, b1 = dict_exp['W1_acc'][experiment], dict_exp['b1_acc'][experiment]
+        W2, b2 = dict_exp['W2_acc'][experiment], dict_exp['b2_acc'][experiment]
+        W3, b3 = dict_exp['W3_acc'][experiment], dict_exp['b3_acc'][experiment]
+        theta_val = dict_exp['thetas'][experiment]
+        log_a1 = dict_exp['log_a1'][experiment] 
+        log_a2 = dict_exp['log_a2'][experiment] 
+        log_a3 = dict_exp['log_a3'][experiment]
+
+        from NN_model import Model
+        W = [[W1, b1], [W2, b2], [W3, b3], theta_val, [log_a1, log_a2, log_a3]]
+        best_model = Model(num_classes, num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.robust, args.reg_stability, W)
+        return best_model
+    
+    elif args.model == "cnn":
+        conv11 = dict_exp['conv11_acc'][experiment]
+        conv12 = dict_exp['conv12_acc'][experiment]
+        conv21 = dict_exp['conv21_acc'][experiment]
+        conv22 = dict_exp['conv22_acc'][experiment]
+        conv31 = dict_exp['conv31_acc'][experiment]
+        conv32 = dict_exp['conv32_acc'][experiment]
+        fc1 = dict_exp['fc1_acc'][experiment]
+        fc2 = dict_exp['fc2_acc'][experiment]
+        theta_val = dict_exp['thetas'][experiment]
+
+        from CNN_model import Model
+        W = [conv11, conv12, conv21, conv22, conv31, conv32, fc1, fc2, theta_val]
+        best_model = Model(num_subsets, batch_size, args.cnn_size, args.fc_size, subset_ratio, pixels_x, pixels_y, num_channels, args.dropout, args.l2, theta, args.robust, W)
+        return best_model
+
+

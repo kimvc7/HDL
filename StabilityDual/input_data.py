@@ -119,12 +119,19 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
         X_test = X_test[:,:,:,numpy.newaxis]
     num_features = X_train.shape[1]*X_train.shape[2]
 
+  #Permute data
+  numpy.random.seed(seed)
+  perm0 = numpy.arange(X_train.shape[0])
+  numpy.random.shuffle(perm0)
+  X = X_train[perm0]
+  Y = y_train[perm0]
+
   n = int(X_train.shape[0]*training_size)
   m = int(n*validation_size)
-  X_val = X_train[:m]
-  y_val = y_train[:m]
-  X_train = X_train[m:n]
-  y_train = y_train[m:n]
+  X_val = X[:m]
+  y_val = Y[:m]
+  X_train = X[m:n]
+  y_train = Y[m:n]
   print("There are", X_train.shape[0], "samples in the training set.")
   print("There are", X_val.shape[0], "samples in the validation set.")
 

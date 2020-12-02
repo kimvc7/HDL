@@ -18,8 +18,6 @@ import itertools
 import utils_model
 import utils_print
 
-from pgd_attack import LinfPGDAttack
-
 import argparse
 
 
@@ -91,6 +89,8 @@ if args.model == "ff":
 elif args.model == "cnn":
     from CNN_model import Model
     assert(tf.keras.backend.image_data_format() == "channels_last")
+
+
 # Setting up training parameters
 seed = config['random_seed']
 tf.set_random_seed(seed)
@@ -105,70 +105,73 @@ initial_learning_rate = config['initial_learning_rate']
 eta = config['constant_learning_rate']
 learning_rate = tf.train.exponential_decay(initial_learning_rate,
  0, 5, 0.85, staircase=True)
-
+theta = args.stable and (not args.MC)
+num_channels, pixels_x, pixels_y = 0, 0, 0
+reshape = True
 global_step = tf.Variable(1, name="global_step")
 
 
 for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_range): #Parameters chosen with validation
   print(batch_size, subset_ratio, args.dropout)
 
+
   #Setting up the data and the model
   if args.model == "ff":
-      data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, seed=seed)
+      data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=reshape, seed=seed)
       num_features = data.train.images.shape[1]
       num_classes = np.unique(data.train.labels).shape[0]
       model = Model(num_classes, num_subsets, batch_size, args.l1_size, args.l2_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.robust, args.reg_stability)
       var_list = [model.W1, model.b1, model.W2, model.b2, model.W3, model.b3]
       if args.l0 > 0:
           var_list = [model.W1, model.log_a_W1, model.b1, model.log_a_W2, model.W2, model.b2, model.W3, model.log_a_W3, model.b3]
+    
   elif args.model == "cnn":
-      data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=False, seed=seed)
+      reshape = False
+      data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=reshape, seed=seed)
       print(data.train.images.shape)
+      num_classes = np.unique(data.train.labels).shape[0]
+      num_features = data.train.images.shape[1]
       pixels_x = data.train.images.shape[1]
       pixels_y = data.train.images.shape[2]
       num_channels = data.train.images.shape[3]
 
-      theta = args.stable and (not args.MC)
+      model = Model(num_subsets, batch_size, args.cnn_size, args.fc_size, subset_ratio, pixels_x, pixels_y, num_channels, args.dropout, args.l2, theta, args.robust)
 
-      model = Model(num_subsets, batch_size, args.cnn_size, args.fc_size, subset_ratio, pixels_x, pixels_y, num_channels, args.dropout, args.l2, theta)
-
-
-  #Set up attack class for evaluating robustness.
-  attack = LinfPGDAttack(model, 
-                       args.robust,
-                       config['k'],
-                       config['a'],
-                       config['random_start'],
-                       config['loss_func'])
 
   #Returns the right loss depending on MC or dual or nothing
   loss = utils_model.get_loss(model, args)
 
-  #Setting up data for testing and validation
-  val_dict = {model.x_input: data.validation.images,
-                  model.y_input: data.validation.labels.reshape(-1)}
-  test_dict = {model.x_input: data.test.images[:testing_size],
-                  model.y_input: data.test.labels[:testing_size].reshape(-1)}
-
 
   # Setting up the optimizer
-  if args.stable and not args.MC:
+  if (args.stable and not args.MC) or (args.model == "cnn"):
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss + model.regularizer, global_step=global_step)
   else:
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss + model.regularizer, global_step=global_step, var_list=var_list)
 
+  
   #Initializing loop variables.
   avg_test_acc = 0
   num_experiments = config['num_experiments']
-  dict_exp = utils_model.create_dict(args, data.train.images.shape, data.test.images.shape)
+  dict_exp = utils_model.create_dict(args, num_classes, data.train.images.shape, data.test.images.shape)
   output_dir = 'outputs/logs/' + str(args.data_set) + '/' + str(datetime.now())
   if not os.path.exists(output_dir):
-      os.makedirs(output_dir)
+    os.makedirs(output_dir)
+
 
   for experiment in range(num_experiments):
+
+    seed_i = seed*(experiment+1)
+    data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=reshape, seed=seed_i)
+
+    #Setting up data for testing and validation
+    val_dict = {model.x_input: data.validation.images,
+                  model.y_input: data.validation.labels.reshape(-1)}
+    test_dict = {model.x_input: data.test.images[:testing_size],
+                  model.y_input: data.test.labels[:testing_size].reshape(-1)}
+
     print("Experiment", experiment)
     summary_writer = tf.summary.FileWriter(
-        output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2))
+      output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2))
 
     with tf.Session() as sess:
           sess.run(tf.global_variables_initializer())
@@ -214,5 +217,9 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
           #Output test results
           utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters)
           avg_test_acc += test_acc
+          x_test, y_test = data.test.images[:testing_size], data.test.labels[:testing_size].reshape(-1)
+          best_model = utils_model.get_best_model(dict_exp, experiment, args, num_classes, num_subsets, batch_size, subset_ratio, 
+            num_features, theta, num_channels, pixels_x, pixels_y)
+          utils_print.update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp)
 
   utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, max_num_training_steps)
