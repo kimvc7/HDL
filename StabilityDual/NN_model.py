@@ -6,7 +6,6 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
 import numpy as np
-import json
 import math
 
 #from l0_regularization import *#get_l0_norm

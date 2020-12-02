@@ -7,7 +7,7 @@ from __future__ import print_function
 from datetime import datetime
 import json
 import os
-import shutil
+#import shutil
 from timeit import default_timer as timer
 
 import tensorflow.compat.v1 as tf

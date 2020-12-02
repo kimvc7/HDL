@@ -43,12 +43,6 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
         regularizer = sess.run(model.regularizer, feed_dict=nat_dict)
         print('    Regularizer', regularizer)
 
-    # print("h1 std", np.std(sess.run(model.h1, feed_dict=nat_dict)))
-    # print("h1 std 2", np.std(sess.run(model.h2, feed_dict=nat_dict), 0))
-    # print('    W1 features', sum(sess.run(model.W1).reshape(-1) > 1e-12))
-    # print('    W2 features', sum(sess.run(model.W2).reshape(-1) > 1e-12))
-    # print('    W3 features', sum(sess.run(model.W3).reshape(-1) > 1e-12))
-
     summary1 = tf.Summary(value=[tf.Summary.Value(tag='TrainAcc', simple_value=nat_acc), ])
     summary2 = tf.Summary(value=[tf.Summary.Value(tag='ValAcc', simple_value=val_acc), ])
     summary3 = tf.Summary(value=[tf.Summary.Value(tag='TrainXent', simple_value=nat_xent), ])
@@ -57,9 +51,6 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
     #tensor = tf.constant(vars(args).keys())
     #print(vars(args).keys())
     #summary = tf.summary.text("Args", tensor)
-    #summary_writer.add_summary(summary, global_step.eval(sess))
-    # summary4 = tf.Summary(value=[tf.Summary.Value(tag='Hidden_weights', simple_value=tf.summary.histogram('Hidden_weights', sess.run(model.W3).reshape(-1))),])
-    # summary4 = tf.summary.histogram('Hidden_weights', model.W3.value())
     summary_writer.add_summary(summary1, global_step.eval(sess))
     summary_writer.add_summary(summary2, global_step.eval(sess))
     summary_writer.add_summary(summary3, global_step.eval(sess))
@@ -159,46 +150,3 @@ def print_layer_stability_cnn(dict_exp):
     print("fc2 std", fc2_stability)
 
     return conv11_stability, conv12_stability, conv21_stability, conv22_stability,conv31_stability,conv32_stability, fc1_stability, fc2_stability
-
-
-# Initialize the summary writer, global variables, and our time counter.
-# summary_writer = tf.summary.FileWriter(model_dir + "/Xent")
-# summary_writer1 = tf.summary.FileWriter(model_dir+ "/Max_Xent")
-# summary_writer2 = tf.summary.FileWriter(model_dir+ "/Accuracy")
-# summary_writer3 = tf.summary.FileWriter(model_dir+ "/Test_Accuracy")
-
-# Tensorboard Summaries
-# summary = tf.Summary(value=[
-#    tf.Summary.Value(tag='Xent', simple_value= nat_xent),])
-# summary1 = tf.Summary(value=[
-#    tf.Summary.Value(tag='Xent', simple_value= max_xent),])
-# summary2 = tf.Summary(value=[
-#    tf.Summary.Value(tag='Accuracy', simple_value= nat_acc*100)])
-# summary3 = tf.Summary(value=[
-#    tf.Summary.Value(tag='Accuracy', simple_value= test_acc*100)])
-# summary_writer.add_summary(summary, global_step.eval(sess))
-# summary_writer1.add_summary(summary1, global_step.eval(sess))
-# summary_writer2.add_summary(summary2, global_step.eval(sess))
-# summary_writer3.add_summary(summary3, global_step.eval(sess))
-
-
-# Initialize the summary writer, global variables, and our time counter.
-# summary_writer = tf.summary.FileWriter(model_dir + "/Xent")
-# summary_writer1 = tf.summary.FileWriter(model_dir+ "/Max_Xent")
-# summary_writer2 = tf.summary.FileWriter(model_dir+ "/Accuracy")
-# summary_writer3 = tf.summary.FileWriter(model_dir+ "/Test_Accuracy")
-
-
-# Tensorboard Summaries
-# summary = tf.Summary(value=[
-#    tf.Summary.Value(tag='Xent', simple_value= nat_xent),])
-# summary1 = tf.Summary(value=[
-#    tf.Summary.Value(tag='Xent', simple_value= max_xent),])
-# summary2 = tf.Summary(value=[
-#    tf.Summary.Value(tag='Accuracy', simple_value= nat_acc*100)])
-# summary3 = tf.Summary(value=[
-#    tf.Summary.Value(tag='Accuracy', simple_value= test_acc*100)])
-# summary_writer.add_summary(summary, global_step.eval(sess))
-# summary_writer1.add_summary(summary1, global_step.eval(sess))
-# summary_writer2.add_summary(summary2, global_step.eval(sess))
-# summary_writer3.add_summary(summary3, global_step.eval(sess))
