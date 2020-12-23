@@ -118,6 +118,12 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
         X_train = X_train[:,:,:,numpy.newaxis]
         X_test = X_test[:,:,:,numpy.newaxis]
     num_features = X_train.shape[1]*X_train.shape[2]
+  if "uci" in data_set.lower():
+    uci_num = int(data_set[3:])
+    full_data = numpy.load("../UCI/data" + str(uci_num) + ".pickle", allow_pickle=True)
+    X_train, X_test, y_train, y_test = full_data['x_train'], full_data['x_test'], full_data['y_train'], full_data[
+      'y_test']
+    num_features = X_train.shape[1]
 
   #Permute data
   numpy.random.seed(seed)
