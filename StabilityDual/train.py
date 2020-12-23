@@ -77,6 +77,9 @@ parser.add_argument("--MC", action="store_true",
 parser.add_argument("--train_size", type=float, default=0.80,
                             help="training percent of the data")
 
+parser.add_argument("--lr", type=float, default=0.001,
+                            help="Adam lr")
+
 parser.add_argument("--val_size", type=float, default=0.20,
                             help="validation percent of the data e.g., 0.25 means 0.25*traning size")
 
@@ -104,9 +107,9 @@ num_checkpoint_steps = config['num_checkpoint_steps']
 testing_size = config['testing_size']
 data_set = args.data_set
 num_subsets = args.num_subsets
-initial_learning_rate = config['initial_learning_rate']
+#initial_learning_rate = config['initial_learning_rate']
 eta = config['constant_learning_rate']
-learning_rate = tf.train.exponential_decay(initial_learning_rate,
+learning_rate = tf.train.exponential_decay(args.lr,
  0, 5, 0.85, staircase=True)
 theta = args.stable and (not args.MC)
 num_channels, pixels_x, pixels_y = 0, 0, 0
