@@ -72,9 +72,11 @@ def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, n
 def update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        attack = LinfPGDAttack(best_model, args.robust, config['k'], config['a'], 
-            config['random_start'], config['loss_func'])
-
+        clip = True
+        if "uci" in args.data_set:
+            clip = False
+        attack = LinfPGDAttack(best_model, args.robust_test, config['k'], config['a'], 
+            config['random_start'], config['loss_func'], clip)
         x_test_adv = attack.perturb(x_test, y_test, sess)
         adv_dict = {best_model.x_input: x_test_adv, best_model.y_input: y_test}
         dict_exp['adv_test_accs'][experiment] = sess.run(best_model.accuracy, feed_dict=adv_dict)
@@ -110,7 +112,7 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         writer = csv.writer(file)
         if args.model == "ff":
             writer.writerow(
-                [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], 
+                [args.stable, args.robust, args.robust_test, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], 
                 dict_exp['adv_test_accs'], std, dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, 
                 w3_stability, logit_stability, gini_stability, args.l2, args.l0, W1_non_zero, W2_non_zero, W3_non_zero, args.l1_size, args.l2_size])
         elif args.model == "cnn":
