@@ -178,9 +178,9 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
     test_dict = {model.x_input: data.test.images[:testing_size],
                   model.y_input: data.test.labels[:testing_size].reshape(-1)}
 
-    print("Experiment", experiment)
-    summary_writer = tf.summary.FileWriter(
-      output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2))
+    directory = output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2)
+    summary_writer = tf.summary.FileWriter(directory)
+    saver = tf.train.Saver(max_to_keep=3)
 
     with tf.Session() as sess:
           sess.run(tf.global_variables_initializer())
@@ -207,6 +207,8 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
                 best_val_acc = val_acc
                 num_iters = ii
                 test_acc = sess.run(model.accuracy, feed_dict=test_dict)
+
+                saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
 
                 print("New best test acc is", test_acc)
                 dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)

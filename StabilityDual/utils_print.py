@@ -9,7 +9,7 @@ from pgd_attack import LinfPGDAttack
 with open('config.json') as config_file:
     config = json.load(config_file)
 
-def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step, saver, directory):
+def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step):
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
     val_acc = sess.run(model.accuracy, feed_dict=val_dict)
     nat_xent = sess.run(model.xent, feed_dict=nat_dict)
@@ -44,7 +44,6 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
         print('    Regularizer', regularizer)
 
 
-    saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
 
     summary1 = tf.Summary(value=[tf.Summary.Value(tag='TrainAcc', simple_value=nat_acc), ])
     summary2 = tf.Summary(value=[tf.Summary.Value(tag='ValAcc', simple_value=val_acc), ])
