@@ -35,6 +35,8 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
             print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
 
     if args.model == "ff":
+        print('    Killed neurons axis 0', sum(np.sum(sess.run(model.W1), axis= 0)==0))
+        print('    Killed neurons axis 1', sum(np.sum(sess.run(model.W1), axis= 1) == 0))
         print('    Non zero W1 features percentage', sum(sess.run(model.W1).reshape(-1) > 0)/sess.run(model.W1).reshape(-1).shape[0])
         print('    Non zero W2 features percentage', sum(sess.run(model.W2).reshape(-1) > 0)/sess.run(model.W2).reshape(-1).shape[0])
         print('    Non zero W3 features percentage', sum(sess.run(model.W3).reshape(-1) > 0)/sess.run(model.W3).reshape(-1).shape[0])
