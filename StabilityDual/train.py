@@ -39,7 +39,10 @@ parser.add_argument("--dropout", type=float, default=1,
                             help="dropout rate, 1 is no dropout, 0 is all set to 0")
 
 parser.add_argument("--robust", "-r", type=float, default=0,
-                            help="Uncertainty set parameter for robustness.")
+                            help="Uncertainty set parameter for training robustness.")
+
+parser.add_argument("--robust_test", "-rtest", type=float, default=0.001,
+                            help="Uncertainty set parameter for evaluating robustness.")
 
 parser.add_argument("--l2", type=float, default=0,
                             help="l2 regularization rate")
@@ -112,6 +115,9 @@ theta = args.stable and (not args.MC)
 num_channels, pixels_x, pixels_y = 0, 0, 0
 reshape = True
 global_step = tf.Variable(1, name="global_step")
+min_num_training_steps = int(0.4*max_num_training_steps)
+if args.robust == 0 and not args.stable and args.l0 == 0:
+  min_num_training_steps = 0
 
 
 for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_range): #Parameters chosen with validation
@@ -172,9 +178,9 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
     test_dict = {model.x_input: data.test.images[:testing_size],
                   model.y_input: data.test.labels[:testing_size].reshape(-1)}
 
-    print("Experiment", experiment)
-    summary_writer = tf.summary.FileWriter(
-      output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2))
+    directory = output_dir + '/exp_' + str(experiment) + '_l2reg_' + str(args.l2)
+    summary_writer = tf.summary.FileWriter(directory)
+    saver = tf.train.Saver(max_to_keep=3)
 
     with tf.Session() as sess:
           sess.run(tf.global_variables_initializer())
@@ -196,11 +202,13 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
               val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step)
               #Validation
-              if val_acc > best_val_acc:
+              if val_acc > best_val_acc and ii > min_num_training_steps:
                 print("New best val acc is", val_acc)
                 best_val_acc = val_acc
                 num_iters = ii
                 test_acc = sess.run(model.accuracy, feed_dict=test_dict)
+
+                saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
 
                 print("New best test acc is", test_acc)
                 dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)

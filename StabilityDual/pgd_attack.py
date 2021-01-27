@@ -12,7 +12,7 @@ import numpy as np
 
 
 class LinfPGDAttack:
-  def __init__(self, model, epsilon, k, a, random_start, loss_func):
+  def __init__(self, model, epsilon, k, a, random_start, loss_func, clip=True):
     """Attack parameter initialization. The attack performs k steps of
        size a, while always staying within epsilon from the initial
        point."""
@@ -21,6 +21,7 @@ class LinfPGDAttack:
     self.k = k
     self.a = a
     self.rand = random_start
+    self.clip = clip
 
     if loss_func == 'xent':
       loss = model.xent
@@ -45,7 +46,8 @@ class LinfPGDAttack:
        examples within epsilon of x_nat in l_infinity norm."""
     if self.rand:
       x = x_nat + np.random.uniform(-self.epsilon, self.epsilon, x_nat.shape)
-      x = np.clip(x, 0, 1) # ensure valid pixel range
+      if self.clip:
+        x = np.clip(x, 0, 1) # ensure valid pixel range
     else:
       x = np.copy(x_nat)
 
@@ -56,7 +58,8 @@ class LinfPGDAttack:
       x += self.a * np.sign(grad)
 
       x = np.clip(x, x_nat - self.epsilon, x_nat + self.epsilon) 
-      x = np.clip(x, 0, 1) # ensure valid pixel range
+      if self.clip:
+        x = np.clip(x, 0, 1) # ensure valid pixel range
 
     return x
 
