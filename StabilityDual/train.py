@@ -201,14 +201,14 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
             if ii % num_output_steps == 0:
 
               val_acc = utils_print.print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, global_step)
-              #Validation
+              saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
+              
+               #Validation
               if val_acc > best_val_acc and ii > min_num_training_steps:
                 print("New best val acc is", val_acc)
                 best_val_acc = val_acc
                 num_iters = ii
                 test_acc = sess.run(model.accuracy, feed_dict=test_dict)
-
-                saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
 
                 print("New best test acc is", test_acc)
                 dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)
