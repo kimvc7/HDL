@@ -13,6 +13,8 @@ import math
 limit_0 = -0.1
 limit_1 = 1.1
 temperature = 2 / 3
+epsilon = 1e-6
+lambd = 1
 W = [[None, None], [None, None], [None, None], None, [None, None, None]]
 
 class Model(object):
@@ -24,6 +26,7 @@ class Model(object):
     self.x_input = tf.placeholder(tf.float32, shape = [None, num_features])
     self.y_input = tf.placeholder(tf.int64, shape = [None])
     self.eps =  eps
+    self.l2 = l2
     W_1, b_1 = weights[0]
     W_2, b_2 = weights[1]
     W_3, b_3 = weights[2]
@@ -44,7 +47,7 @@ class Model(object):
     self.log_a_W1 = self._log_a_variable(self.W1.get_shape(), log_a1) # , name="log_a_W1")
 
     if l0 > 0:
-      self.W1_masked, self.l0_norm_W1 = self.get_l0_norm_full(self.W1, self.log_a_W1, "W1")
+      self.W1_masked, self.l0_norm_W1 = self.get_l0_norm_full(self.W1, self.log_a_W1)
       self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1_masked) + self.b1)
 
     #### END TODO ####
@@ -60,7 +63,7 @@ class Model(object):
     self.log_a_W2 = self._log_a_variable(self.W2.get_shape(), log_a2)
 
     if l0 > 0:
-      self.W2_masked, self.l0_norm_W2 = self.get_l0_norm_full(self.W2, self.log_a_W2, "W2")
+      self.W2_masked, self.l0_norm_W2 = self.get_l0_norm_full(self.W2, self.log_a_W2)
       self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2_masked) + self.b2)
 
     #### END TODO ####
@@ -75,7 +78,7 @@ class Model(object):
     self.log_a_W3 = self._log_a_variable(self.W3.get_shape(), log_a3)#, name="log_a_W3")
 
     if l0 > 0:
-      self.W3_masked, self.l0_norm_W3 = self.get_l0_norm_full(self.W3, self.log_a_W3, "W3")
+      self.W3_masked, self.l0_norm_W3 = self.get_l0_norm_full(self.W3, self.log_a_W3)
       self.pre_softmax = tf.matmul(self.h2, self.W3_masked) + self.b3
     #### END TODO ####
     else:
@@ -123,11 +126,16 @@ class Model(object):
     self.MC_xent = max_subset_xent
 
     #Compute regularizer
-    self.regularizer = l2*(tf.reduce_sum(tf.square(self.W1)) + tf.reduce_sum(tf.square(self.W2))
+    self.regularizer = self.l2*(tf.reduce_sum(tf.square(self.W1)) + tf.reduce_sum(tf.square(self.W2))
                               + tf.reduce_sum(tf.square(self.W3)))
     #### TODO ####
     if l0 > 0:
-      self.regularizer = self.regularizer + l0 * (self.l0_norm_W1 + self.l0_norm_W2 + self.l0_norm_W3)
+      self.regularizer = l0 * (self.l0_norm_W1 + self.l0_norm_W2 + self.l0_norm_W3)
+      if l2 > 0:
+        self.regularizer += self.l2 * (tf.reduce_sum(tf.square(self.W1_masked)) + tf.reduce_sum(tf.square(self.W2_masked))
+              + tf.reduce_sum(tf.square(self.W3_masked)))
+
+
 
     #### END TODO ####
 
@@ -190,7 +198,7 @@ class Model(object):
         return tf.Variable(a0)
 
 #### TODO ####
-  def get_l0_norm_full(self, x, log_a, varname):
+  def get_l0_norm_full(self, x, log_a):
 
     shape = x.get_shape()
 
@@ -206,8 +214,18 @@ class Model(object):
 
     # compute differentiable l0 norm ; cdf_qz
     # Implements the CDF of the 'stretched' concrete distribution
-    #TODO check
-    l0_norm = tf.reduce_sum(tf.sigmoid(log_a - temperature * math.log(-limit_0 / limit_1))) #, name="l0_norm_" + varname)
+    #if self.l2 > 0:
+      #q0 = tf.clip_by_value(
+        #tf.sigmoid(temperature * math.log(-limit_0 / limit_1)-log_a),
+        #epsilon, 1-epsilon)
+      #logpw_col = -tf.reduce_sum(- (.5 * self.l2 * tf.square(x)) - lambd, 0)
+      #l0_norm = tf.reduce_sum((1 - q0) * logpw_col)
+    #  #logpb = -tf.reduce_sum((1 - q0) * (.5 * l2 * tf.pow(self.bias, 2) - lambd))
+    #  #logpw #+ logpb
+    #else:
+    l0_norm = tf.reduce_sum(tf.clip_by_value(
+        tf.sigmoid(log_a - temperature * math.log(-limit_0 / limit_1)),
+        epsilon, 1-epsilon))
 
     # get mask for calculating sparse version of tensor
     mask = hard_sigmoid(s_bar)
