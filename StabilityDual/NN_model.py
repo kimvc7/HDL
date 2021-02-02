@@ -10,9 +10,9 @@ import math
 
 #from l0_regularization import *#get_l0_norm
 
-GAMMA = -0.1
-ZETA = 1.1
-BETA = 2 / 3
+limit_0 = -0.1
+limit_1 = 1.1
+temperature = 2 / 3
 W = [[None, None], [None, None], [None, None], None, [None, None, None]]
 
 class Model(object):
@@ -164,6 +164,9 @@ class Model(object):
       if initial is None:
         W0 = tf.glorot_uniform_initializer()
         return tf.get_variable(shape=shape, initializer=W0, name=str(np.random.randint(1e10)))
+      #in case for normal init
+      #initial = tf.glorot_normal_initializer()
+      #return tf.get_variable(shape=shape, initializer=initial, name=str(np.random.randint(1e10)))
       else:
         W0 = tf.constant(initial, shape = shape, dtype=tf.float32)
         return tf.Variable(W0)
@@ -181,7 +184,7 @@ class Model(object):
   def _log_a_variable(shape, initial = None):
       if initial is None:
         a0 = tf.Variable(tf.random_normal(shape, mean=0.0, stddev=0.01))
-        return tf.Variable(a0)
+        return a0
       else:
         a0 = tf.constant(initial, shape = shape, dtype=tf.float32)
         return tf.Variable(a0)
@@ -192,16 +195,19 @@ class Model(object):
     shape = x.get_shape()
 
     # sample u
+    # TODO Change 1e-6
     u = tf.random_uniform(shape)
 
     # compute hard concrete distribution
-    s = tf.sigmoid((tf.log(u) - tf.log(1.0 - u) + log_a) / BETA)
-
+    # i.e., implements the quantile, aka inverse CDF, of the 'stretched' concrete distribution
+    y = tf.sigmoid((tf.log(u) - tf.log(1.0 - u) + log_a) / temperature)
     # stretch hard concrete distribution
-    s_bar = s * (ZETA - GAMMA) + GAMMA
+    s_bar = y * (limit_1 - limit_0) + limit_0
 
-    # compute differentiable l0 norm
-    l0_norm = tf.reduce_sum(tf.sigmoid(log_a - BETA * math.log(-GAMMA / ZETA)))#, name="l0_norm_" + varname)
+    # compute differentiable l0 norm ; cdf_qz
+    # Implements the CDF of the 'stretched' concrete distribution
+    #TODO check
+    l0_norm = tf.reduce_sum(tf.sigmoid(log_a - temperature * math.log(-limit_0 / limit_1))) #, name="l0_norm_" + varname)
 
     # get mask for calculating sparse version of tensor
     mask = hard_sigmoid(s_bar)

@@ -35,11 +35,23 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
             print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
 
     if args.model == "ff":
-        print('    Killed neurons axis 0', sum(np.sum(sess.run(model.W1), axis= 0)==0))
-        print('    Killed neurons axis 1', sum(np.sum(sess.run(model.W1), axis= 1) == 0))
-        print('    Non zero W1 features percentage', sum(sess.run(model.W1).reshape(-1) > 0)/sess.run(model.W1).reshape(-1).shape[0])
-        print('    Non zero W2 features percentage', sum(sess.run(model.W2).reshape(-1) > 0)/sess.run(model.W2).reshape(-1).shape[0])
-        print('    Non zero W3 features percentage', sum(sess.run(model.W3).reshape(-1) > 0)/sess.run(model.W3).reshape(-1).shape[0])
+        if args.l0 > 0:
+            print('    Killed neurons W1', sum(np.sum(sess.run(model.W1_masked), axis= 0) == 0))
+            print('    Killed features input to W1', sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0)) #sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0))
+            print('    Killed neurons W2', sum(np.sum(sess.run(model.W2_masked), axis=0) == 0))
+            print('    Killed features input to W2', sum(np.sum(sess.run(model.W2_masked), axis=1) == 0))
+            print('    Killed neurons W3', sum(np.sum(sess.run(model.W3_masked), axis=0) == 0 ))
+            print('    Killed features input to W3', sum(np.sum(sess.run(model.W3_masked), axis=1) == 0))
+            print('    Non zero W1 features percentage', sum(sess.run(model.W1_masked).reshape(-1) > 0)/sess.run(model.W1_masked).reshape(-1).shape[0])
+            print('    Non zero W2 features percentage', sum(sess.run(model.W2_masked).reshape(-1) > 0)/sess.run(model.W2_masked).reshape(-1).shape[0])
+            print('    Non zero W3 features percentage', sum(sess.run(model.W3_masked).reshape(-1) > 0)/sess.run(model.W3_masked).reshape(-1).shape[0])
+        else:
+            print('    Non zero W1 features percentage',
+                  sum(sess.run(model.W1).reshape(-1) > 0) / sess.run(model.W1).reshape(-1).shape[0])
+            print('    Non zero W2 features percentage',
+                  sum(sess.run(model.W2).reshape(-1) > 0) / sess.run(model.W2).reshape(-1).shape[0])
+            print('    Non zero W3 features percentage',
+                  sum(sess.run(model.W3).reshape(-1) > 0) / sess.run(model.W3).reshape(-1).shape[0])
         #print('    Debugging: sum of W3', sum(sess.run(model.W3)))
         #print('    Debugging: sum of log_a_W3', sum(sess.run(model.log_a_W3)))
         regularizer = sess.run(model.regularizer, feed_dict=nat_dict)
