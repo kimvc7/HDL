@@ -42,11 +42,11 @@ def create_dict(args, num_classes, train_shape, test_size):
     dict_exp['W2_non_zero'] = np.zeros(config['num_experiments'])
     dict_exp['W3_non_zero'] = np.zeros(config['num_experiments'])
     dict_exp['W1_killed_input_features'] = 0
-    dict_exp['W2_killed_input_features'] = 0
-    dict_exp['W3_killed_input_features'] = 0
     dict_exp['W1_killed_neurons'] = 0
-    dict_exp['W2_killed_input_neurons'] = 0
-    dict_exp['W3_killed_input_neurons'] = 0
+    dict_exp['W2_killed_input_features'] = 0
+    dict_exp['W2_killed_neurons'] = 0
+    dict_exp['W3_killed_input_features'] = 0
+    dict_exp['W3_killed_neurons'] = 0
     dict_exp['adv_test_accs'] = np.zeros(config['num_experiments'])
 
 
@@ -72,9 +72,6 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
     dict_exp['thetas'][experiment] = sess.run(model.theta)
 
     if args.model == "ff":
-        dict_exp['W1_acc'][experiment] = sess.run(model.W1).reshape(-1)
-        dict_exp['W2_acc'][experiment] = sess.run(model.W2).reshape(-1)
-        dict_exp['W3_acc'][experiment] = sess.run(model.W3).reshape(-1)
         dict_exp['b1_acc'][experiment] = sess.run(model.b1)
         dict_exp['b2_acc'][experiment] = sess.run(model.b2)
         dict_exp['b3_acc'][experiment] = sess.run(model.b3)
@@ -87,12 +84,18 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
             dict_exp['W2_non_zero'] = sum(sess.run(model.W2_masked).reshape(-1) > 0) / sess.run(model.W2_masked).reshape(-1).shape[0]
             dict_exp['W3_non_zero'] = sum(sess.run(model.W3_masked).reshape(-1) > 0) / sess.run(model.W3_masked).reshape(-1).shape[0]
             dict_exp['W1_killed_neurons'] = sum(np.sum(sess.run(model.W1_masked), axis=0) == 0)
-            dict_exp['W1_killed_features'] = sum(np.sum(sess.run(model.W1_masked), axis=1) == 0)  # sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0))
+            dict_exp['W1_killed_input_features'] = sum(np.sum(sess.run(model.W1_masked), axis=1) == 0)  # sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0))
             dict_exp['W2_killed_neurons'] = sum(np.sum(sess.run(model.W2_masked), axis=0) == 0)
-            dict_exp['W2_killed_features'] = sum(np.sum(sess.run(model.W2_masked), axis=1) == 0)
+            dict_exp['W2_killed_input_features'] = sum(np.sum(sess.run(model.W2_masked), axis=1) == 0)
             dict_exp['W3_killed_neurons'] = sum(np.sum(sess.run(model.W3_masked), axis=0) == 0)
-            dict_exp['W3_killed_features'] = sum(np.sum(sess.run(model.W3_masked), axis=1) == 0)
+            dict_exp['W3_killed_input_features'] = sum(np.sum(sess.run(model.W3_masked), axis=1) == 0)
+            dict_exp['W1_acc'][experiment] = sess.run(model.W1_masked).reshape(-1)
+            dict_exp['W2_acc'][experiment] = sess.run(model.W2_masked).reshape(-1)
+            dict_exp['W3_acc'][experiment] = sess.run(model.W3_masked).reshape(-1)
         else:
+            dict_exp['W1_acc'][experiment] = sess.run(model.W1).reshape(-1)
+            dict_exp['W2_acc'][experiment] = sess.run(model.W2).reshape(-1)
+            dict_exp['W3_acc'][experiment] = sess.run(model.W3).reshape(-1)
             dict_exp['W1_non_zero'] = sum(sess.run(model.W1).reshape(-1) > 0) / sess.run(model.W1).reshape(-1).shape[0]
             dict_exp['W2_non_zero'] = sum(sess.run(model.W2).reshape(-1) > 0) / sess.run(model.W2).reshape(-1).shape[0]
             dict_exp['W3_non_zero'] = sum(sess.run(model.W3).reshape(-1) > 0) / sess.run(model.W3).reshape(-1).shape[0]

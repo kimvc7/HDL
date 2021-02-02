@@ -130,7 +130,10 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
             writer.writerow(
                 [args.stable, args.robust, args.robust_test, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], 
                 dict_exp['adv_test_accs'], std, dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, 
-                w3_stability, logit_stability, gini_stability, args.l2, args.l0, W1_non_zero, W2_non_zero, W3_non_zero, args.l1_size, args.l2_size, args.lr])
+                w3_stability, logit_stability, gini_stability, args.l2, args.l0, W1_non_zero, W2_non_zero, W3_non_zero, args.l1_size, args.l2_size,
+                args.lr, dict_exp['W1_killed_input_features'], dict_exp['W1_killed_neurons'], dict_exp['W2_killed_input_features'], dict_exp['W2_killed_neurons'],
+                dict_exp['W3_killed_input_features'], dict_exp['W3_killed_neurons']])
+
         elif args.model == "cnn":
             writer.writerow(
                 [args.stable, args.robust, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], std,
