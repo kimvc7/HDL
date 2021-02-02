@@ -146,9 +146,27 @@ class Model(object):
     self.num_correct = tf.reduce_sum(tf.cast(correct_prediction, tf.int64))
     self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-    tf.summary.histogram("Weights W1", self.W1)
-    tf.summary.histogram("Weights W2", self.W2)
-    tf.summary.histogram("Weights W3", self.W3)
+    if l0 > 0:
+      tf.summary.histogram("Weights W1", self.W1_masked)
+      tf.summary.histogram("Weights W2", self.W2_masked)
+      tf.summary.histogram("Weights W3", self.W3_masked)
+      tf.summary.scalar("W1 absolute value avg", tf.reduce_mean(tf.math.abs(self.W1_masked)))
+      tf.summary.scalar("W1 absolute value std", tf.math.reduce_std(tf.math.abs(self.W1_masked)))
+      tf.summary.scalar("W2 absolute value avg", tf.reduce_mean(tf.math.abs(self.W2_masked)))
+      tf.summary.scalar("W2 absolute value std", tf.math.reduce_std(tf.math.abs(self.W2_masked)))
+      tf.summary.scalar("W3 absolute value avg", tf.reduce_mean(tf.math.abs(self.W3_masked)))
+      tf.summary.scalar("W3 absolute value std", tf.math.reduce_std(tf.math.abs(self.W3_masked)))
+    else:
+      tf.summary.histogram("Weights W1", self.W1)
+      tf.summary.histogram("Weights W2", self.W2)
+      tf.summary.histogram("Weights W3", self.W3)
+      tf.summary.scalar("W1 absolute value avg", tf.reduce_mean(tf.math.abs(self.W1)))
+      tf.summary.scalar("W1 absolute value std", tf.math.reduce_std(tf.math.abs(self.W1)))
+      tf.summary.scalar("W2 absolute value avg", tf.reduce_mean(tf.math.abs(self.W2)))
+      tf.summary.scalar("W2 absolute value std", tf.math.reduce_std(tf.math.abs(self.W2)))
+      tf.summary.scalar("W3 absolute value avg", tf.reduce_mean(tf.math.abs(self.W3)))
+      tf.summary.scalar("W3 absolute value std", tf.math.reduce_std(tf.math.abs(self.W3)))
+
     tf.summary.histogram("Pre_softmax Test", self.pre_softmax)
     tf.summary.histogram("Post_softmax Test", self.logits)
     tf.summary.histogram("Post_softmax Norm Test", tf.norm(self.logits, axis=1))
@@ -157,12 +175,7 @@ class Model(object):
     tf.summary.scalar("Xent Loss Test", self.xent)
     tf.summary.scalar("MC_Xent Loss Test", self.MC_xent)
     tf.summary.scalar("Dual Xent Loss Test", self.dual_xent)
-    tf.summary.scalar("W1 absolute value avg", tf.reduce_mean(tf.math.abs(self.W1)))
-    tf.summary.scalar("W1 absolute value std", tf.math.reduce_std(tf.math.abs(self.W1)))
-    tf.summary.scalar("W2 absolute value avg", tf.reduce_mean(tf.math.abs(self.W2)))
-    tf.summary.scalar("W2 absolute value std", tf.math.reduce_std(tf.math.abs(self.W2)))
-    tf.summary.scalar("W3 absolute value avg", tf.reduce_mean(tf.math.abs(self.W3)))
-    tf.summary.scalar("W3 absolute value std", tf.math.reduce_std(tf.math.abs(self.W3)))
+
 
     self.summary = tf.summary.merge_all()
 

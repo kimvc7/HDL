@@ -19,6 +19,7 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
     robust_stable_xent = sess.run(model.robust_stable_xent, feed_dict=nat_dict)
     theta = sess.run(model.theta, feed_dict=nat_dict)
 
+
     print('Step {}:    ({})'.format(ii, datetime.now()))
     print('    training nat accuracy {:.4}'.format(nat_acc * 100))
     print('    validation nat accuracy {:.4}'.format(val_acc * 100))
@@ -36,22 +37,29 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
 
     if args.model == "ff":
         if args.l0 > 0:
-            print('    Killed neurons W1', sum(np.sum(sess.run(model.W1_masked), axis= 0) == 0))
-            print('    Killed features input to W1', sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0)) #sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0))
-            print('    Killed neurons W2', sum(np.sum(sess.run(model.W2_masked), axis=0) == 0))
-            print('    Killed features input to W2', sum(np.sum(sess.run(model.W2_masked), axis=1) == 0))
-            print('    Killed neurons W3', sum(np.sum(sess.run(model.W3_masked), axis=0) == 0 ))
-            print('    Killed features input to W3', sum(np.sum(sess.run(model.W3_masked), axis=1) == 0))
-            print('    Non zero W1 features percentage', sum(sess.run(model.W1_masked).reshape(-1) > 0)/sess.run(model.W1_masked).reshape(-1).shape[0])
-            print('    Non zero W2 features percentage', sum(sess.run(model.W2_masked).reshape(-1) > 0)/sess.run(model.W2_masked).reshape(-1).shape[0])
-            print('    Non zero W3 features percentage', sum(sess.run(model.W3_masked).reshape(-1) > 0)/sess.run(model.W3_masked).reshape(-1).shape[0])
+            W1_killed_neurons = sum(np.sum(sess.run(model.W1_masked), axis=0) == 0)
+            W2_killed_neurons = sum(np.sum(sess.run(model.W2_masked), axis=0) == 0)
+            W3_killed_neurons = sum(np.sum(sess.run(model.W3_masked), axis=0) == 0)
+            W1_killed_inputs = sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0)
+            W2_killed_inputs = sum(np.sum(sess.run(model.W2_masked), axis=1) == 0)
+            W3_killed_inputs = sum(np.sum(sess.run(model.W3_masked), axis=1) == 0)
+            Non_zero_W1 = sum(sess.run(model.W1_masked).reshape(-1) > 0)/sess.run(model.W1_masked).reshape(-1).shape[0]
+            Non_zero_W2 = sum(sess.run(model.W2_masked).reshape(-1) > 0)/sess.run(model.W2_masked).reshape(-1).shape[0]
+            Non_zero_W3 = sum(sess.run(model.W3_masked).reshape(-1) > 0)/sess.run(model.W3_masked).reshape(-1).shape[0]
+            print('    Killed neurons W1', W1_killed_neurons)
+            print('    Killed features input to W1', W1_killed_inputs) #sum(np.sum(sess.run(model.W1_masked), axis= 1) == 0))
+            print('    Killed neurons W2', W2_killed_neurons)
+            print('    Killed features input to W2', W2_killed_inputs)
+            print('    Killed neurons W3', W3_killed_neurons)
+            print('    Killed features input to W3', W3_killed_inputs)
+
         else:
-            print('    Non zero W1 features percentage',
-                  sum(sess.run(model.W1).reshape(-1) > 0) / sess.run(model.W1).reshape(-1).shape[0])
-            print('    Non zero W2 features percentage',
-                  sum(sess.run(model.W2).reshape(-1) > 0) / sess.run(model.W2).reshape(-1).shape[0])
-            print('    Non zero W3 features percentage',
-                  sum(sess.run(model.W3).reshape(-1) > 0) / sess.run(model.W3).reshape(-1).shape[0])
+            Non_zero_W1 = sum(sess.run(model.W1).reshape(-1) > 0) / sess.run(model.W1).reshape(-1).shape[0]
+            Non_zero_W2 = sum(sess.run(model.W2).reshape(-1) > 0) / sess.run(model.W2).reshape(-1).shape[0]
+            Non_zero_W3 = sum(sess.run(model.W3).reshape(-1) > 0) / sess.run(model.W3).reshape(-1).shape[0]
+        print('    Non zero W1 features percentage', Non_zero_W1)
+        print('    Non zero W2 features percentage', Non_zero_W2)
+        print('    Non zero W3 features percentage', Non_zero_W3)
         #print('    Debugging: sum of W3', sum(sess.run(model.W3)))
         #print('    Debugging: sum of log_a_W3', sum(sess.run(model.log_a_W3)))
         regularizer = sess.run(model.regularizer, feed_dict=nat_dict)
@@ -63,6 +71,28 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
     summary2 = tf.Summary(value=[tf.Summary.Value(tag='ValAcc', simple_value=val_acc), ])
     summary3 = tf.Summary(value=[tf.Summary.Value(tag='TrainXent', simple_value=nat_xent), ])
     summary4 = tf.Summary(value=[tf.Summary.Value(tag='DualXent', simple_value=dual_xent), ])
+    if args.l0 > 0:
+        summary5 = tf.Summary(value=[tf.Summary.Value(tag='W1_killed_neurons', simple_value=W1_killed_neurons), ])
+        summary6 = tf.Summary(value=[tf.Summary.Value(tag='W2_killed_neurons', simple_value=W2_killed_neurons), ])
+        summary7 = tf.Summary(value=[tf.Summary.Value(tag='W3_killed_neurons', simple_value=W3_killed_neurons), ])
+        summary8 = tf.Summary(value=[tf.Summary.Value(tag='W1_killed_inputs', simple_value=W1_killed_inputs), ])
+        summary9 = tf.Summary(value=[tf.Summary.Value(tag='W2_killed_inputs', simple_value=W2_killed_inputs), ])
+        summary10 = tf.Summary(value=[tf.Summary.Value(tag='W3_killed_inputs', simple_value=W3_killed_inputs), ])
+
+        summary_writer.add_summary(summary5, global_step.eval(sess))
+        summary_writer.add_summary(summary6, global_step.eval(sess))
+        summary_writer.add_summary(summary7, global_step.eval(sess))
+        summary_writer.add_summary(summary8, global_step.eval(sess))
+        summary_writer.add_summary(summary9, global_step.eval(sess))
+        summary_writer.add_summary(summary10, global_step.eval(sess))
+
+    summary11 = tf.Summary(value=[tf.Summary.Value(tag='W1_Non_Zero', simple_value=Non_zero_W1), ])
+    summary12 = tf.Summary(value=[tf.Summary.Value(tag='W2_Non_Zero', simple_value=Non_zero_W2), ])
+    summary13 = tf.Summary(value=[tf.Summary.Value(tag='W3_Non_Zero', simple_value=Non_zero_W3), ])
+
+    summary_writer.add_summary(summary11, global_step.eval(sess))
+    summary_writer.add_summary(summary12, global_step.eval(sess))
+    summary_writer.add_summary(summary13, global_step.eval(sess))
     #tensor = tf.constant(json.dumps(vars(args), indent=2))
     #tensor = tf.constant(vars(args).keys())
     #print(vars(args).keys())
@@ -129,7 +159,7 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         if args.model == "ff":
             writer.writerow(
                 [args.stable, args.robust, args.robust_test, num_experiments, args.train_size, batch_size, subset_ratio, avg_test_acc, dict_exp['test_accs'], 
-                dict_exp['adv_test_accs'], std, dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability, 
+                dict_exp['adv_test_accs'], std, dict_exp['thetas'], max_num_training_steps, dict_exp['iterations'], w1_stability, w2_stability,
                 w3_stability, logit_stability, gini_stability, args.l2, args.l0, W1_non_zero, W2_non_zero, W3_non_zero, args.l1_size, args.l2_size,
                 args.lr, dict_exp['W1_killed_input_features'], dict_exp['W1_killed_neurons'], dict_exp['W2_killed_input_features'], dict_exp['W2_killed_neurons'],
                 dict_exp['W3_killed_input_features'], dict_exp['W3_killed_neurons']])
