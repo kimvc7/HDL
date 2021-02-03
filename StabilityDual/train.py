@@ -41,7 +41,7 @@ parser.add_argument("--dropout", type=float, default=1,
 parser.add_argument("--robust", "-r", type=float, default=0,
                             help="Uncertainty set parameter for training robustness.")
 
-parser.add_argument("--robust_test", "-rtest", type=float, default=0.001,
+parser.add_argument("--robust_test", "-rtest", type=float,  nargs='+', default=[1e-5, 1e-4, 1e-3, 1e-2, 1e-1],
                             help="Uncertainty set parameter for evaluating robustness.")
 
 parser.add_argument("--l2", type=float, default=0,

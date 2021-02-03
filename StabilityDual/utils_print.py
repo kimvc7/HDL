@@ -121,11 +121,12 @@ def update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp):
         clip = True
         if "uci" in args.data_set:
             clip = False
-        attack = LinfPGDAttack(best_model, args.robust_test, config['k'], config['a'], 
+        for eps_test in args.robust_test:
+            attack = LinfPGDAttack(best_model, eps_test, config['k'], config['a'], 
             config['random_start'], config['loss_func'], clip)
-        x_test_adv = attack.perturb(x_test, y_test, sess)
-        adv_dict = {best_model.x_input: x_test_adv, best_model.y_input: y_test}
-        dict_exp['adv_test_accs'][experiment] = sess.run(best_model.accuracy, feed_dict=adv_dict)
+            x_test_adv = attack.perturb(x_test, y_test, sess)
+            adv_dict = {best_model.x_input: x_test_adv, best_model.y_input: y_test}
+            dict_exp['adv_test_accs'][eps_test][experiment] = sess.run(best_model.accuracy, feed_dict=adv_dict)
 
 
 def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, avg_test_acc, max_num_training_steps):

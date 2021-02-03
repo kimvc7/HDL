@@ -47,7 +47,7 @@ def create_dict(args, num_classes, train_shape, test_size):
     dict_exp['W2_killed_neurons'] = 0
     dict_exp['W3_killed_input_features'] = 0
     dict_exp['W3_killed_neurons'] = 0
-    dict_exp['adv_test_accs'] = np.zeros(config['num_experiments'])
+    dict_exp['adv_test_accs'] = {eps_test: np.zeros(config['num_experiments']) for eps_test in args.robust_test}
 
 
     if args.model == "cnn":
