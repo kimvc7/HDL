@@ -1,5 +1,4 @@
 #!/bin/bash
-data="UCI8"
 
 #SBATCH --job-name=HDL
 #SBATCH --output=out_%a.txt
@@ -14,20 +13,20 @@ data="UCI8"
 
 module load python/3.6.3
 module load sloan/python/modules/3.6
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 0 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 1 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 2 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 3 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 4 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 5 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 6 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 7 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 8 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 9 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 10 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 11 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 12 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 13 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 14 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 15 --data_set $data
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 16 --data_set $data
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 0 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 1 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 2 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 3 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 4 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 5 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 6 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 7 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 8 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 9 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 10 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 11 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 12 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 13 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 14 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 15 --data_set uci8
+xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 16 --data_set uci8
