@@ -16,4 +16,4 @@
 
 source /etc/profile ; module load anaconda/2020a
 
-python -u train.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 0 --data_set cifar
+python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 0 --data_set cifar
