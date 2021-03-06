@@ -2,7 +2,7 @@ import keras
 import collections
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import random_seed
-import numpy
+import numpy as np
 
 _Datasets = collections.namedtuple('_Datasets', ['train', 'validation', 'test'])
 
@@ -30,15 +30,15 @@ class _DataSet(object):
      # to [num examples, rows*columns] (assuming depth == 1)
 
     seed1, seed2 = random_seed.get_seed(seed)
-    numpy.random.seed(seed1 if seed is None else seed2)
+    np.random.seed(seed1 if seed is None else seed2)
     if reshape:
       labels = labels.reshape(labels.shape[0])    
       images = images.reshape(images.shape[0], num_features)
 
     if dtype == dtypes.float32:
       # Convert from [0, 255] -> [0.0, 1.0].
-      images = images.astype(numpy.float32)
-      images = numpy.multiply(images, 1.0 / 255.0)
+      images = images.astype(np.float32)
+      images = np.multiply(images, 1.0 / 255.0)
 
     self._num_examples = images.shape[0]
     self._images = images
@@ -68,8 +68,8 @@ class _DataSet(object):
 
     # Shuffle for the first epoch
     if self._epochs_completed == 0 and start == 0 and shuffle:
-      perm0 = numpy.arange(self._num_examples)
-      numpy.random.shuffle(perm0)
+      perm0 = np.arange(self._num_examples)
+      np.random.shuffle(perm0)
       self._images = self._images[perm0]
       self._labels = self._labels[perm0]
 
@@ -86,8 +86,8 @@ class _DataSet(object):
 
       # Shuffle the data
       if shuffle:
-        perm = numpy.arange(self._num_examples)
-        numpy.random.shuffle(perm)
+        perm = np.arange(self._num_examples)
+        np.random.shuffle(perm)
         self._images = self._images[perm]
         self._labels = self._labels[perm]
 
@@ -98,8 +98,8 @@ class _DataSet(object):
 
       images_new_part = self._images[start:end]
       labels_new_part = self._labels[start:end]
-      return numpy.concatenate((images_rest_part, images_new_part),
-                               axis=0), numpy.concatenate(
+      return np.concatenate((images_rest_part, images_new_part),
+                               axis=0), np.concatenate(
                                    (labels_rest_part, labels_new_part), axis=0)
 
     else:
@@ -115,20 +115,23 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
   if data_set == "mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
     if not reshape:
-        X_train = X_train[:,:,:,numpy.newaxis]
-        X_test = X_test[:,:,:,numpy.newaxis]
+        X_train = X_train[:,:,:,np.newaxis]
+        X_test = X_test[:,:,:,np.newaxis]
     num_features = X_train.shape[1]*X_train.shape[2]
   if "uci" in data_set.lower():
     uci_num = int(data_set[3:])
-    full_data = numpy.load("../UCI/data" + str(uci_num) + ".pickle", allow_pickle=True)
+    full_data = np.load("../UCI/data" + str(uci_num) + ".pickle", allow_pickle=True)
     X_train, X_test, y_train, y_test = full_data['x_train'], full_data['x_test'], full_data['y_train'], full_data[
       'y_test']
+    print(X_train.shape)
+    print(np.std(X_train, axis=0))
+    print(np.mean(X_train, axis=0))
     num_features = X_train.shape[1]
 
   #Permute data
-  numpy.random.seed(seed)
-  perm0 = numpy.arange(X_train.shape[0])
-  numpy.random.shuffle(perm0)
+  np.random.seed(seed)
+  perm0 = np.arange(X_train.shape[0])
+  np.random.shuffle(perm0)
   X = X_train[perm0]
   Y = y_train[perm0]
 
@@ -138,6 +141,16 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
   y_val = Y[:m]
   X_train = X[m:n]
   y_train = Y[m:n]
+
+  if "uci" in data_set.lower():
+    m = np.mean(X_train, axis = 0)
+    s = np.std(X_train, axis=0)
+    X_train = (X_train - m)/s
+    X_val = (X_val - m) / s
+    X_test = (X_test - m)/s
+    print(X_train.shape)
+    print(np.std(X_train, axis=0))
+    print(np.mean(X_train, axis=0))
   print("There are", X_train.shape[0], "samples in the training set.")
   print("There are", X_val.shape[0], "samples in the validation set.")
 
