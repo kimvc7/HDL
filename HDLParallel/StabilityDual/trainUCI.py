@@ -23,8 +23,8 @@ import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument("--gnum", type=int, default=1, help='which gen param of 192 [0,191]')
-parser.add_argument("--mnum", type=int, default=1, help='which method/data of 33 [0,32]')
+parser.add_argument("--gnum", type=int, default=1, help='which gen param of 72 [0,71]')
+parser.add_argument("--mnum", type=int, default=1, help='which method/data of 34 [0,33]')
 
 parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
                             help="batch range")
