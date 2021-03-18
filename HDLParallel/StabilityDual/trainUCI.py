@@ -94,8 +94,8 @@ gen_param = []
 for batchsize in [64,128,16]:
     for l_r in [1e-3,1e-4]:
         for l_2 in [0,1e-5,1e-4,1e-3]:
-            for drop_out in [0.85,1]:
-                for nnsize in [(64,32),(256,128),(1024,256),(128,64)]:
+            for drop_out in [1,]:
+                for nnsize in [(64,32),(256,128),(128,64)]:
                     gen_param.append((batchsize,l_r,l_2,drop_out,nnsize))
                         
 ratiorange = 0.8
