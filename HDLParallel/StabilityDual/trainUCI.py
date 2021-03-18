@@ -114,7 +114,7 @@ elif args.mnum>=5 and args.mnum<=9:
     robust=10**(-1*(10-args.mnum))
     stable,l0=0,0
 
-elif args.mnum>=10 and args.mnum<=32:
+elif args.mnum>=10 and args.mnum<=33:
     rob_range,l0_range = [0,1e-5,1e-4,1e-3,1e-2,1e-1],[0,1e-4,1e-5,1e-6]
     combos = [(i,j) for i in rob_range for j in l0_range][1:]
     
