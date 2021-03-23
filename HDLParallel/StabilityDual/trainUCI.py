@@ -229,7 +229,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
 
   for experiment in range(num_experiments):
-
+    acc = 0
     seed_i = seed*(experiment+1)
     data = input_data.load_data_set(training_size = args.train_size, validation_size=args.val_size, data_set=data_set, reshape=reshape, seed=seed_i)
 
@@ -265,7 +265,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
               saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
               
                #Validation
-              if val_acc > best_val_acc and ii > min_num_training_steps:
+              if val_acc >= best_val_acc and ii > min_num_training_steps:
                 print("New best val acc is", val_acc)
                 best_val_acc = val_acc
                 num_iters = ii
@@ -273,6 +273,8 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
                 print("New best test acc is", test_acc)
                 dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)
+                if val_acc >= 99.5:
+                    acc+=1
 
               if ii != 0:
                 print('    {} examples per second'.format(
@@ -284,7 +286,8 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
             sess.run(optimizer, feed_dict=nat_dict)
             end = timer()
             training_time += end - start
-    
+            if acc >= 5:
+                break
     
           #Output test results
           utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters)
