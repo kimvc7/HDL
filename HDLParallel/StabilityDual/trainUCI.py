@@ -273,7 +273,7 @@ for batch_size, subset_ratio in itertools.product(args.batch_range, args.ratio_r
 
                 print("New best test acc is", test_acc)
                 dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)
-                if val_acc >= 99.5:
+                if val_acc >= 0.995:
                     acc+=1
 
               if ii != 0:
