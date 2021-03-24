@@ -103,9 +103,11 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
     summary_writer.add_summary(summary4, global_step.eval(sess))
     # summary_writer.add_text('args', str(args), global_step.eval(sess))
     if args.model == "ff":
-        summary5 = sess.run(model.summary, feed_dict=test_dict)
-        summary_writer.add_summary(summary5, global_step.eval(sess))
-
+        try:
+            summary5 = sess.run(model.summary, feed_dict=test_dict)
+            summary_writer.add_summary(summary5, global_step.eval(sess))
+        except:
+            print("Error with NaN caught")
     return val_acc
 
 def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters):
