@@ -29,4 +29,3 @@ xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 29 
 xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 30 --data_set uci1
 xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 31 --data_set uci1
 xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 32 --data_set uci1
-xvfb-run -d python3.6 trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 33 --data_set uci1
