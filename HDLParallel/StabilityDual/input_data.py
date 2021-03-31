@@ -145,6 +145,9 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
   if "uci" in data_set.lower():
     m = np.mean(X_train, axis = 0)
     s = np.std(X_train, axis=0)
+    for i in range(len(s)):
+      if s[i] == 0:
+        s[i] = 1
     X_train = (X_train - m)/s
     X_val = (X_val - m) / s
     X_test = (X_test - m)/s
