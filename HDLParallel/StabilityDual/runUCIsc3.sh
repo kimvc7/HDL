@@ -16,12 +16,12 @@
 
 source /etc/profile ; module load anaconda/2020a
 
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 16 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 17 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 18 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 19 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 20 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 21 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 22 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 23 --data_set uci1
-python -u trainCIFAR.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 24 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 16 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 17 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 18 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 19 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 20 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 21 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 22 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 23 --data_set uci1
+python -u trainUCI.py -m ff --gnum ${SLURM_ARRAY_TASK_ID} --mnum 24 --data_set uci1
