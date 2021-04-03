@@ -66,6 +66,7 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
         print('    Regularizer', regularizer)
 
 
+    """
 
     summary1 = tf.Summary(value=[tf.Summary.Value(tag='TrainAcc', simple_value=nat_acc), ])
     summary2 = tf.Summary(value=[tf.Summary.Value(tag='ValAcc', simple_value=val_acc), ])
@@ -108,6 +109,7 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
             summary_writer.add_summary(summary5, global_step.eval(sess))
         except:
             print("Error with NaN caught")
+    """
     return val_acc
 
 def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters):
