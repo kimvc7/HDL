@@ -10,6 +10,7 @@ library(yaml)
 library(rPref)
 library(gdata)
 library(plotly)
+library(data.table)
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -221,7 +222,7 @@ ggsave(paste0(dataset_name,"pareto_adversarial_accuracy_stability.png"))
 
 pareto %>% ggplot() + aes(x = avg_test_acc, y = sparsity, color = l0_reg, shape = stable) + 
   geom_point(alpha = 0.2,size=2) + theme_few() + xlab("Test Accuracy") + ylab("Weight Sparsity") +
-  scale_color_gradient(low="red", high="blue")+ 
+  scale_color_gradient(low="red", high="blue") + 
   labs(color='Sparsity Parameter', shape = "Stability") +
   ggtitle("Sparsity-Accuracy Tradeoff")
 ggsave(paste0(dataset_name,"pareto_sparsity_accuracy.png"))
@@ -237,22 +238,81 @@ ggsave(paste0(dataset_name,"pareto_sparsity_accuracy.png"))
 robust_requirement = function(x){df = subset(pareto, pareto$`0.01` >= x); return(sum(df$robust==0.01)/nrow(df))}
 sparse_requirement = function(x){df = subset(pareto, pareto$sparsity <= x); return(sum(df$sparse==TRUE)/nrow(df))}
 stable_requirement = function(x){df = subset(pareto, pareto$avg_logit_stability <= x); return(sum(df$stable==1)/nrow(df))}
+robust.stable_requirement = function(x){df = subset(pareto, pareto$avg_test_acc >= x); return(sum(df$robust==0.01 & df$sparse==FALSE & df$stable==1)/nrow(df))}
+
 
 robust_M = max(pareto$`0.01`)
 robust_m = min(pareto$`0.01`)
 robust_domain = robust_m + (1:500)*((robust_M - robust_m)/500)
 robust_images = sapply(robust_domain, robust_requirement)
 plot(robust_domain, robust_images)
+data_robust = data.frame(robust_domain, robust_images)
 
 stable_M = max(pareto$avg_logit_stability)
 stable_m = min(pareto$avg_logit_stability)
 stable_domain = stable_m + (1:500)*((stable_M - stable_m)/500)
 stable_images = sapply(stable_domain, stable_requirement)
 plot(stable_domain, stable_images)
+data_stable = data.frame(stable_domain, stable_images)
 
 sparse_M = max(pareto$sparsity)
 sparse_m = min(pareto$sparsity)
 sparse_domain = sparse_m + (1:500)*((sparse_M - sparse_m)/500)
 sparse_images = sapply(sparse_domain, sparse_requirement)
 plot(sparse_domain, sparse_images)
+data_sparse = data.frame(stable_domain, stable_images)
+
+acc_M = max(pareto$avg_test_acc)
+acc_m = min(pareto$avg_test_acc)
+acc_domain = sparse_m + (1:500)*((acc_M - acc_m)/500)
+acc_images = sapply(acc_domain, robust.stable_requirement)
+plot(acc_domain, acc_images)
+data_acc = data.frame(acc_domain, acc_images)
+
+
+
+avg_ratio = mean(pareto$robust == 0.01)
+ggplot(data =data_robust,  aes(x = robust_domain, y = robust_images)) +
+  xlab("Average Adversarial Accuracy") + ylab("Percentage of Networks Trained with Robustness") +
+  geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, robust_images)),fill= "#56B4E9") +
+  geom_ribbon(aes(ymin=pmin(avg_ratio, robust_images), ymax=avg_ratio),fill= "#FF9999") +
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+ggsave(paste0(dataset_name,"Percentage_Robust_Networks_.png"))
+
+
+avg_ratio = mean(pareto$stable ==1)
+ggplot(data =data_stable,  aes(x = stable_domain, y = stable_images)) +
+  xlab("Average Logit Stability") + ylab("Percentage of Networks Trained with Stability") +
+  geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, stable_images)),fill= "#56B4E9") +
+  geom_ribbon(aes(ymin=pmin(avg_ratio,stable_images), ymax=avg_ratio),fill= "#FF9999") +
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+ggsave(paste0(dataset_name,"Percentage_Stable_Networks_.png"))
+
+
+avg_ratio = mean(pareto$sparse == TRUE)
+ggplot(data =data_sparse,  aes(x = sparse_domain, y = sparse_images)) +
+  xlab("Percentage of Non-zero Weights") + ylab("Percentage of Networks Trained with Sparsity") +
+  geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, sparse_images)),fill= "#56B4E9") +
+  geom_ribbon(aes(ymin=pmin(avg_ratio,sparse_images), ymax=avg_ratio),fill= "#FF9999") +
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+ggsave(paste0(dataset_name,"Percentage_Sparse_Networks_.png"))
+
+
+
+avg_ratio = mean(pareto$robust==0.01 & pareto$sparse==FALSE & pareto$stable==1)
+ggplot(data = data_acc,  aes(x = acc_domain, y = acc_images)) +
+  xlab("Average Test Accuracy") + ylab("Percentage of Networks Trained with Robustness And Stability") +
+  geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, acc_images)),fill= "#56B4E9") +
+  geom_ribbon(aes(ymin=pmin(avg_ratio, acc_images), ymax=avg_ratio),fill= "#FF9999") +
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+ggsave(paste0(dataset_name,"Percentage_robust_stable_Networks_.png"))
+
+
+
+
+
 
