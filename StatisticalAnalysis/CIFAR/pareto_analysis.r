@@ -235,12 +235,24 @@ ggsave(paste0(dataset_name,"pareto_sparsity_accuracy.png"))
 
 
 robust_requirement = function(x){df = subset(pareto, pareto$`0.01` >= x); return(sum(df$robust==0.01)/nrow(df))}
-sparse_requirement = function(x){df = subset(pareto, pareto$sparsity <= x); return(sum(df$sparse==1)/nrow(df))}
+sparse_requirement = function(x){df = subset(pareto, pareto$sparsity <= x); return(sum(df$sparse==TRUE)/nrow(df))}
 stable_requirement = function(x){df = subset(pareto, pareto$avg_logit_stability <= x); return(sum(df$stable==1)/nrow(df))}
 
 robust_M = max(pareto$`0.01`)
-robust_domain = (1:500)*(robust_M/500)
+robust_m = min(pareto$`0.01`)
+robust_domain = robust_m + (1:500)*((robust_M - robust_m)/500)
 robust_images = sapply(robust_domain, robust_requirement)
 plot(robust_domain, robust_images)
 
+stable_M = max(pareto$avg_logit_stability)
+stable_m = min(pareto$avg_logit_stability)
+stable_domain = stable_m + (1:500)*((stable_M - stable_m)/500)
+stable_images = sapply(stable_domain, stable_requirement)
+plot(stable_domain, stable_images)
+
+sparse_M = max(pareto$sparsity)
+sparse_m = min(pareto$sparsity)
+sparse_domain = sparse_m + (1:500)*((sparse_M - sparse_m)/500)
+sparse_images = sapply(sparse_domain, sparse_requirement)
+plot(sparse_domain, sparse_images)
 
