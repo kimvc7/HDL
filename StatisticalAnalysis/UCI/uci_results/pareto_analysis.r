@@ -19,37 +19,13 @@ library(data.table)
 ####################################################################################################################################
 
 
-data = read_csv("results_ffcifar_michael.csv", col_names = c("stable","robust","robust_test","n_experiments",
+data_total = read_csv("results_ffuci10.csv", col_names = c("stable","robust","robust_test","n_experiments",
                                                              "train_size","batch_size","subset_ratio","avg_test_acc","dict_test_accs","adv_test_accs","std",
                                                              "thetas","num_training_steps","iterations","w1_stability","w2_stability","w3_stability","logit_stability",
                                                              "gini_stability","l2","l0","W1_non_zero","W2_non_zero","W3_non_zero","l1_size","l2_size","lr","adv_acc0",
                                                              "adv_acc1","adv_acc2","adv_acc3","adv_acc4","adv_acc5"))
-data2 = read_csv("results_ffcifar_leonard.csv", col_names = c("stable","robust","robust_test","n_experiments",
-                                                              "train_size","batch_size","subset_ratio","avg_test_acc","dict_test_accs","adv_test_accs","std",
-                                                              "thetas","num_training_steps","iterations","w1_stability","w2_stability","w3_stability","logit_stability",
-                                                              "gini_stability","l2","l0","W1_non_zero","W2_non_zero","W3_non_zero","l1_size","l2_size","lr","adv_acc0",
-                                                              "adv_acc1","adv_acc2","adv_acc3","adv_acc4","adv_acc5"))
-
-data3 = read_csv("results_ffcifar_kim.csv", col_names = c("stable","robust","robust_test","n_experiments",
-                                                          "train_size","batch_size","subset_ratio","avg_test_acc","dict_test_accs","adv_test_accs","std",
-                                                          "thetas","num_training_steps","iterations","w1_stability","w2_stability","w3_stability","logit_stability",
-                                                          "gini_stability","l2","l0","W1_non_zero","W2_non_zero","W3_non_zero","l1_size","l2_size","lr","adv_acc0",
-                                                          "adv_acc1","adv_acc2","adv_acc3","adv_acc4","adv_acc5"))
-
-data4 = read_csv("results_ffcifar_ivan.csv", col_names = c("stable","robust","robust_test","n_experiments",
-                                                           "train_size","batch_size","subset_ratio","avg_test_acc","dict_test_accs","adv_test_accs","std",
-                                                           "thetas","num_training_steps","iterations","w1_stability","w2_stability","w3_stability","logit_stability",
-                                                           "gini_stability","l2","l0","W1_non_zero","W2_non_zero","W3_non_zero","l1_size","l2_size","lr","adv_acc0",
-                                                           "adv_acc1","adv_acc2","adv_acc3","adv_acc4","adv_acc5"))
-
-data5 = read_csv("results_ffcifar_alex.csv", col_names = c("stable","robust","robust_test","n_experiments",
-                                                           "train_size","batch_size","subset_ratio","avg_test_acc","dict_test_accs","adv_test_accs","std",
-                                                           "thetas","num_training_steps","iterations","w1_stability","w2_stability","w3_stability","logit_stability",
-                                                           "gini_stability","l2","l0","W1_non_zero","W2_non_zero","W3_non_zero","l1_size","l2_size","lr","adv_acc0",
-                                                           "adv_acc1","adv_acc2","adv_acc3","adv_acc4","adv_acc5"))
 
 
-data_total = rbind(rbind(rbind(rbind(data,data2),data3),data4),data5)
 
 
 ####################################################################################################################################
@@ -58,7 +34,7 @@ data_total = rbind(rbind(rbind(rbind(data,data2),data3),data4),data5)
 ####################################################################################################################################
 ####################################################################################################################################
 
-dataset_name = "cifar"
+dataset_name = "uci10"
 # the single most frankenstein line of code Michael has written in R so far
 regex_result = apply(do.call(rbind,lapply(gsub("\\s+"," ",str_replace_all(data_total$adv_test_accs, "(array\\(|\\)|\n|\r\n)",  "")),
                                           yaml.load)),c(1,2),function(x) mean(x[[1]]))
@@ -75,7 +51,7 @@ data_total$l0_reg = log(data_total$l0+1e-06)/max(abs(log(data_total$l0+1e-06))) 
 #Find points in the Pareto Frontier
 data_total$ID <- seq.int(nrow(data_total))
 data_total$sparse <- as.factor(data_total$l0_reg != 0)
-pareto <- psel(data_total, high(avg_test_acc) * high(`0.01`)  * low(avg_logit_stability) * low(sparsity))
+pareto <- psel(data_total, high(avg_test_acc) * high(`1e-04`)  * low(avg_logit_stability) * low(sparsity))
 data_total$Pareto <- (data_total$ID %in% pareto$ID)
 data_total$Pareto = as.factor(data_total$Pareto)
 
@@ -87,14 +63,14 @@ data_total$Pareto = as.factor(data_total$Pareto)
 ####################################################################################################################################
 
 #Plot Pareto curve
-fig<- plot_ly(data_total, x = ~avg_test_acc, y = ~`0.01`, z = ~avg_logit_stability, 
+fig<- plot_ly(data_total, x = ~avg_test_acc, y = ~`1e-04`, z = ~avg_logit_stability, 
               marker = list( line = list(color = 'rgb(0, 0, 0)', width = 1)), color = ~sparsity, opacity = 0.1)
 fig <- fig %>% add_markers()
 fig <- fig %>% layout(scene = list(xaxis = list(title = 'Accuracy'),
                                    yaxis = list(title = 'Adv Accuracy'),
                                    zaxis = list(title = 'Stability')))
 fig <- fig %>%
-  add_trace( x = pareto$avg_test_acc, y = pareto$`0.01`, z = pareto$avg_logit_stability, color = pareto$sparsity, opacity = 1,
+  add_trace( x = pareto$avg_test_acc, y = pareto$`1e-04`, z = pareto$avg_logit_stability, color = pareto$sparsity, opacity = 1,
              marker = list(line = list(color = 'rgb(0, 0, 0)', width = 1)), name = 'Opacity 1.0', showlegend = F) 
 fig
 
@@ -185,7 +161,7 @@ ggsave(paste0(dataset_name,"pareto_stability_accuracy.png"))
 
 
 
-pareto %>% select( c(`1e-05`, `1e-04`, `0.001`, `0.01`,`0.1`,robustness, stable,avg_test_acc)) %>% gather("id", "value", 1:5) %>% ggplot() + aes(x = avg_test_acc, y = value, color = robustness, shape = stable) + 
+pareto %>% select( c(`1e-04`, `1e-04`, `0.001`, `1e-04`,`0.1`, robustness, stable,avg_test_acc)) %>% gather("id", "value", 1:5) %>% ggplot() + aes(x = avg_test_acc, y = value, color = robustness, shape = stable) + 
   geom_point(alpha = 0.2,size=2) + theme_few() + xlab("Test Accuracy") + ylab("Adversarial Accuracy") +
   scale_color_gradient(low="red", high="blue")+ 
   labs(color='Robustness', shape = "Stability") +
@@ -194,7 +170,7 @@ ggsave(paste0(dataset_name,"pareto_adversarial_accuracy_full.png"))
 
 
 
-pareto %>% ggplot() + aes(x = avg_test_acc, y = `0.01`, color = robustness, shape = stable) + 
+pareto %>% ggplot() + aes(x = avg_test_acc, y = `1e-04`, color = robustness, shape = stable) + 
   geom_point(alpha = 0.2,size=2) + theme_few() + xlab("Test Accuracy") + ylab("Adversarial Accuracy") +
   scale_color_gradient(low="red", high="blue")+ 
   labs(color='Robustness', shape = "Stability") +
@@ -234,17 +210,18 @@ ggsave(paste0(dataset_name,"pareto_sparsity_accuracy.png"))
 ####################################################################################################################################
 ####################################################################################################################################
 
-robust_requirement = function(x){df = subset(pareto, pareto$`0.01` >= x); return(sum(df$robust>0)/nrow(df))}
+
+robust_requirement = function(x){df = subset(pareto, pareto$`1e-04` >= x); return(sum(df$robust>0)/nrow(df))}
 sparse_requirement = function(x){df = subset(pareto, pareto$sparsity <= x); return(sum(df$sparse==TRUE)/nrow(df))}
 stable_requirement = function(x){df = subset(pareto, pareto$avg_logit_stability <= x); return(sum(df$stable==1)/nrow(df))}
 robust.stable_requirement = function(x){df = subset(pareto, pareto$avg_test_acc >= x); return(sum(df$robust>0 & df$sparse==FALSE & df$stable==1)/nrow(df))}
 HDL_acc_requirement = function(x){df = subset(pareto, pareto$avg_test_acc >= x); return(sum(df$robust>0 & df$sparse==TRUE & df$stable==1)/nrow(df))}
 HDL_sparse_requirement = function(x){df = subset(pareto, pareto$sparsity <= x); return(sum(df$robust>0 & df$sparse==TRUE & df$stable==1)/nrow(df))}
-HDL_stable_requirement = function(x){df = subset(pareto, pareto$avg_logit_stability <= x); return(sum(df$robust==0.01 & df$sparse==TRUE & df$stable==1)/nrow(df))}
-HDL_robust_requirement = function(x){df = subset(pareto, pareto$`0.01` >= x); return(sum(df$robust>0 & df$sparse==TRUE & df$stable==1)/nrow(df))}
+HDL_stable_requirement = function(x){df = subset(pareto, pareto$avg_logit_stability <= x); return(sum(df$robust>0 & df$sparse==TRUE & df$stable==1)/nrow(df))}
+HDL_robust_requirement = function(x){df = subset(pareto, pareto$`1e-04` >= x); return(sum(df$robust>0 & df$sparse==TRUE & df$stable==1)/nrow(df))}
 
-robust_M = max(pareto$`0.01`)
-robust_m = min(pareto$`0.01`)
+robust_M = max(pareto$`1e-04`)
+robust_m = min(pareto$`1e-04`)
 robust_domain = robust_m + (1:500)*((robust_M - robust_m)/500)
 robust_images = sapply(robust_domain, robust_requirement)
 plot(robust_domain, robust_images)
@@ -362,9 +339,4 @@ ggplot(data = data_HDL_sparse,  aes(x = sparse_domain, y =HDL_sparse_images)) +
   geom_hline(yintercept=avg_ratio) + theme_minimal()+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))
 ggsave(paste0(dataset_name,"Percentage_HDL_Networks_sparse.png"))
-
-
-
-
-
 
