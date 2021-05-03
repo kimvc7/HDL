@@ -87,15 +87,17 @@ data_total$Pareto = as.factor(data_total$Pareto)
 ####################################################################################################################################
 
 #Plot Pareto curve
-fig<- plot_ly(data_total, x = ~avg_test_acc, y = ~`0.01`, z = ~avg_logit_stability, 
-              marker = list( line = list(color = 'rgb(0, 0, 0)', width = 1)), color = ~sparsity, opacity = 0.1)
+fig<- plot_ly(data_total, x = ~avg_test_acc, y = ~`0.01`, z = ~avg_logit_stability, colors = "YlGnBu",
+              marker = list( width = 1), 
+              color = ~sparsity, opacity = 0.1)
 fig <- fig %>% add_markers()
 fig <- fig %>% layout(scene = list(xaxis = list(title = 'Accuracy'),
                                    yaxis = list(title = 'Adv Accuracy'),
                                    zaxis = list(title = 'Stability')))
 fig <- fig %>%
   add_trace( x = pareto$avg_test_acc, y = pareto$`0.01`, z = pareto$avg_logit_stability, color = pareto$sparsity, opacity = 1,
-             marker = list(line = list(color = 'rgb(0, 0, 0)', width = 1)), name = 'Opacity 1.0', showlegend = F) 
+             marker = list(line = list(color= "rgb(0,0,0)", width = 0.5)), 
+             name = 'Opacity 1.0', showlegend = F) 
 fig
 
 
@@ -234,7 +236,8 @@ ggsave(paste0(dataset_name,"pareto_sparsity_accuracy.png"))
 ####################################################################################################################################
 ####################################################################################################################################
 
-robust_requirement = function(x){df = subset(pareto, pareto$`0.01` >= x); return(sum(df$robust>0)/nrow(df))}
+smoothing_range = 15
+robust_requirement = function(x){df = subset(pareto, pareto$`0.01` >= x ); return(sum(df$robust>0)/nrow(df))}
 sparse_requirement = function(x){df = subset(pareto, pareto$sparsity <= x); return(sum(df$sparse==TRUE)/nrow(df))}
 stable_requirement = function(x){df = subset(pareto, pareto$avg_logit_stability <= x); return(sum(df$stable==1)/nrow(df))}
 robust.stable_requirement = function(x){df = subset(pareto, pareto$avg_test_acc >= x); return(sum(df$robust>0 & df$sparse==FALSE & df$stable==1)/nrow(df))}
@@ -246,6 +249,7 @@ HDL_robust_requirement = function(x){df = subset(pareto, pareto$`0.01` >= x); re
 robust_M = max(pareto$`0.01`)
 robust_m = min(pareto$`0.01`)
 robust_domain = robust_m + (1:500)*((robust_M - robust_m)/500)
+robust_requirement = function(x){df = subset(pareto, (pareto$`0.01` >= x -(robust_M - robust_m)/500 * smoothing_range)  & (pareto$`0.01` <= x + (robust_M - robust_m)/500 * smoothing_range) ); return(sum(df$robust>0)/nrow(df))}
 robust_images = sapply(robust_domain, robust_requirement)
 plot(robust_domain, robust_images)
 data_robust = data.frame(robust_domain, robust_images)
@@ -253,6 +257,7 @@ data_robust = data.frame(robust_domain, robust_images)
 stable_M = max(pareto$avg_logit_stability)
 stable_m = min(pareto$avg_logit_stability)
 stable_domain = stable_m + (1:500)*((stable_M - stable_m)/500)
+stable_requirement = function(x){df = subset(pareto, (pareto$avg_logit_stability <= x +(stable_M - stable_m)/500 * smoothing_range)& pareto$avg_logit_stability >= (x - (stable_M - stable_m)/500 * smoothing_range)); return(sum(df$stable==1)/nrow(df))}
 stable_images = sapply(stable_domain, stable_requirement)
 plot(stable_domain, stable_images)
 data_stable = data.frame(stable_domain, stable_images)
@@ -260,6 +265,7 @@ data_stable = data.frame(stable_domain, stable_images)
 sparse_M = max(pareto$sparsity)
 sparse_m = min(pareto$sparsity)
 sparse_domain = sparse_m + (1:500)*((sparse_M - sparse_m)/500)
+sparse_requirement = function(x){df = subset(pareto, (pareto$sparsity <= x +(sparse_M - sparse_m)/500 * smoothing_range)& pareto$sparsity >= (x - (sparse_M - sparse_m)/500 * smoothing_range)); return(sum(df$sparse==TRUE)/nrow(df))}
 sparse_images = sapply(sparse_domain, sparse_requirement)
 plot(sparse_domain, sparse_images)
 data_sparse = data.frame(stable_domain, stable_images)
@@ -267,6 +273,7 @@ data_sparse = data.frame(stable_domain, stable_images)
 acc_M = max(pareto$avg_test_acc)
 acc_m = min(pareto$avg_test_acc)
 acc_domain = acc_m + (1:500)*((acc_M - acc_m)/500)
+robust.stable_requirement = function(x){df = subset(pareto, (pareto$avg_test_acc <= x +(acc_M - acc_m)/500 * smoothing_range) & pareto$avg_test_acc >= (x - (acc_M - acc_m)/500 * smoothing_range)); return(sum(df$robust>0 & df$sparse==FALSE & df$stable==1)/nrow(df))}
 acc_images = sapply(acc_domain, robust.stable_requirement)
 plot(acc_domain, acc_images)
 data_acc = data.frame(acc_domain, acc_images)
@@ -285,15 +292,18 @@ data_HDL_stable = data.frame(stable_domain, HDL_stable_images)
 HDL_sparse_images = sapply(sparse_domain, HDL_sparse_requirement)
 data_HDL_sparse = data.frame(sparse_domain, HDL_sparse_images)
 
+setwd("Plots/")
+
+
 
 avg_ratio = mean(pareto$robust >0)
 ggplot(data =data_robust,  aes(x = robust_domain, y = robust_images)) +
   xlab("Average Adversarial Accuracy") + ylab("Percentage of Networks Trained with Robustness") +
   geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, robust_images)),fill= "#56B4E9") +
   geom_ribbon(aes(ymin=pmin(avg_ratio, robust_images), ymax=avg_ratio),fill= "#FF9999") +
-  geom_hline(yintercept=avg_ratio) + theme_minimal()+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
-ggsave(paste0(dataset_name,"Percentage_Robust_Networks_.png"))
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+theme(axis.text=element_text(size=15), axis.title=element_text(size=19))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + scale_x_continuous(labels = scales::percent_format(accuracy = 1))
+ggsave(paste0(dataset_name,"_robust_adversarial.png"))
 
 
 avg_ratio = mean(pareto$stable ==1)
@@ -301,9 +311,9 @@ ggplot(data =data_stable,  aes(x = stable_domain, y = stable_images)) +
   xlab("Average Logit Stability") + ylab("Percentage of Networks Trained with Stability") +
   geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, stable_images)),fill= "#56B4E9") +
   geom_ribbon(aes(ymin=pmin(avg_ratio,stable_images), ymax=avg_ratio),fill= "#FF9999") +
-  geom_hline(yintercept=avg_ratio) + theme_minimal()+
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+theme(axis.text=element_text(size=15), axis.title=element_text(size=19))+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))
-ggsave(paste0(dataset_name,"Percentage_Stable_Networks_.png"))
+ggsave(paste0(dataset_name,"_stable_stability.png"))
 
 
 avg_ratio = mean(pareto$sparse == TRUE)
@@ -311,9 +321,9 @@ ggplot(data =data_sparse,  aes(x = sparse_domain, y = sparse_images)) +
   xlab("Percentage of Non-zero Weights") + ylab("Percentage of Networks Trained with Sparsity") +
   geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, sparse_images)),fill= "#56B4E9") +
   geom_ribbon(aes(ymin=pmin(avg_ratio,sparse_images), ymax=avg_ratio),fill= "#FF9999") +
-  geom_hline(yintercept=avg_ratio) + theme_minimal()+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
-ggsave(paste0(dataset_name,"Percentage_Sparse_Networks_.png"))
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+theme(axis.text=element_text(size=15), axis.title=element_text(size=19))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + scale_x_continuous(labels = scales::percent_format(accuracy = 1))
+ggsave(paste0(dataset_name,"_sparse_sparsity.png"))
 
 
 
@@ -322,9 +332,9 @@ ggplot(data = data_acc,  aes(x = acc_domain, y = acc_images)) +
   xlab("Average Test Accuracy") + ylab("Percentage of Networks Trained with Robustness And Stability") +
   geom_ribbon(aes(ymin=avg_ratio, ymax=pmax(avg_ratio, acc_images)),fill= "#56B4E9") +
   geom_ribbon(aes(ymin=pmin(avg_ratio, acc_images), ymax=avg_ratio),fill= "#FF9999") +
-  geom_hline(yintercept=avg_ratio) + theme_minimal()+
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
-ggsave(paste0(dataset_name,"Percentage_robust_stable_Networks_.png"))
+  geom_hline(yintercept=avg_ratio) + theme_minimal()+theme(axis.text=element_text(size=15), axis.title=element_text(size=19))+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + scale_x_continuous(labels = scales::percent_format(accuracy = 1))
+ggsave(paste0(dataset_name,"_robust+stable_accuracy.png"))
 
 avg_ratio = mean(pareto$robust>0 & pareto$sparse==TRUE & pareto$stable==1)
 ggplot(data = data_HDL_acc,  aes(x = acc_domain, y =HDL_acc_images)) +
