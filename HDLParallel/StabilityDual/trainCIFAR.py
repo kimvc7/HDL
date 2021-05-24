@@ -24,7 +24,7 @@ import argparse
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("--gnum", type=int, default=1, help='which gen param of 256 [0,255]')
-parser.add_argument("--mnum", type=int, default=1, help='which method/data of 33 [0,32]')
+parser.add_argument("--mnum", type=int, default=1, help='which method/data of 15 [0,14]')
 
 parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
                             help="batch range")
@@ -84,7 +84,7 @@ parser.add_argument("--lr", type=float, default=0.001,
                             help="Adam lr")
 
 parser.add_argument("--val_size", type=float, default=0.20,
-                            help="validation percent of the data e.g., 0.25 means 0.25*traning size")
+                            help="validation percent of the data e.g., 0.25 means 0.25*training size")
 args = parser.parse_args()
 with open('config.json') as config_file:
     config = json.load(config_file)
@@ -102,28 +102,13 @@ ratiorange = 0.8
 gen_param = gen_param[args.gnum]
 
 robust,stable,l0 = -1,-1,-1
-if args.mnum==0: robust,stable,l0 = 0,0,0
 
-elif args.mnum==1: robust,stable,l0 = 0,1,0
-
-elif args.mnum==2: robust,stable,l0 = 0,0,1e-4
-elif args.mnum==3: robust,stable,l0 = 0,0,1e-5
-elif args.mnum==4: robust,stable,l0 = 0,0,1e-6
-
-elif args.mnum>=5 and args.mnum<=9:
-    robust=10**(-1*(10-args.mnum))
-    stable,l0=0,0
-
-elif args.mnum>=10 and args.mnum<=32:
-    rob_range,l0_range = [0,1e-5,1e-4,1e-3,1e-2,1e-1],[0,1e-4,1e-5,1e-6]
-    combos = [(i,j) for i in rob_range for j in l0_range][1:]
+rob_range,l0_range = [1e-5,1e-4,1e-3,1e-2,1e-1],[1e-4,1e-5,1e-6]
+combos = [(i,j) for i in rob_range for j in l0_range]
     
-    robust=combos[args.mnum-10][0]
-    l0=combos[args.mnum-10][1]
-    stable=1
-else:
-    print('invalid mnum input')
-    1/0
+robust=combos[args.mnum][0]
+l0=combos[args.mnum][1]
+stable=0
     
     
     
