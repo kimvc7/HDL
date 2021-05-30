@@ -24,7 +24,7 @@ import argparse
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("--gnum", type=int, default=1, help='which gen param of 72 [0,71]')
-parser.add_argument("--mnum", type=int, default=1, help='which method/data of 34 [0,33]')
+parser.add_argument("--mnum", type=int, default=1, help='which method/data of 34 [0,14]')
 
 parser.add_argument("--batch_range", type=int, nargs='+', default=[64],
                             help="batch range")
@@ -102,29 +102,13 @@ ratiorange = 0.8
 gen_param = gen_param[args.gnum]
 
 robust,stable,l0 = -1,-1,-1
-if args.mnum==0: robust,stable,l0 = 0,0,0
 
-elif args.mnum==1: robust,stable,l0 = 0,1,0
+rob_range,l0_range = [1e-5,1e-4,1e-3,1e-2,1e-1],[1e-4,1e-5,1e-6]
+combos = [(i,j) for i in rob_range for j in l0_range]
 
-elif args.mnum==2: robust,stable,l0 = 0,0,1e-4
-elif args.mnum==3: robust,stable,l0 = 0,0,1e-5
-elif args.mnum==4: robust,stable,l0 = 0,0,1e-6
-
-elif args.mnum>=5 and args.mnum<=9:
-    robust=10**(-1*(10-args.mnum))
-    stable,l0=0,0
-
-elif args.mnum>=10 and args.mnum<=33:
-    rob_range,l0_range = [0,1e-5,1e-4,1e-3,1e-2,1e-1],[0,1e-4,1e-5,1e-6]
-    combos = [(i,j) for i in rob_range for j in l0_range][1:]
-    
-    robust=combos[args.mnum-10][0]
-    l0=combos[args.mnum-10][1]
-    stable=1
-else:
-    print('invalid mnum input')
-    1/0
-    
+robust=combos[args.mnum][0]
+l0=combos[args.mnum][1]
+stable=0  
     
     
 
