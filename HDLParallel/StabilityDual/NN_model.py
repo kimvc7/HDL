@@ -1,5 +1,5 @@
 """
-The model is a multiclass perceptron for 10 classes.
+The model is a 3-layer multiclass perceptron.
 """
 
 import tensorflow.compat.v1 as tf
@@ -8,8 +8,7 @@ tf.disable_v2_behavior()
 import numpy as np
 import math
 
-#from l0_regularization import *#get_l0_norm
-
+#Parameters for the L0 loss
 limit_0 = -0.1
 limit_1 = 1.1
 temperature = 2 / 3
@@ -43,30 +42,25 @@ class Model(object):
 
     # For L0 reg
     # initialize log a from normal distribution
-    #### TODO ####
     self.log_a_W1 = self._log_a_variable(self.W1.get_shape(), log_a1) # , name="log_a_W1")
 
     if l0 > 0:
       self.W1_masked, self.l0_norm_W1 = self.get_l0_norm_full(self.W1, self.log_a_W1)
       self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1_masked) + self.b1)
 
-    #### END TODO ####
     else:
       self.h1 = tf.nn.relu(tf.matmul(self.x_input, self.W1) + self.b1)
     self.h1 = tf.nn.dropout(self.h1, self.dropout)
 
     self.W2 = self._weight_variable([l1_size, l2_size], W_2)
     self.b2 = self._bias_variable([l2_size], b_2)
-    #self.log_a_W2 = self._weight_variable([l1_size, l2_size])#tf.get_variable(tf.random_normal(self.W2.get_shape(), mean=0.0, stddev=0.01))#, name="log_a_W2")
 
-    #### TODO ####
     self.log_a_W2 = self._log_a_variable(self.W2.get_shape(), log_a2)
 
     if l0 > 0:
       self.W2_masked, self.l0_norm_W2 = self.get_l0_norm_full(self.W2, self.log_a_W2)
       self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2_masked) + self.b2)
 
-    #### END TODO ####
     else:
       self.h2 = tf.nn.relu(tf.matmul(self.h1, self.W2) + self.b2)
     self.h2 = tf.nn.dropout(self.h2, self.dropout)
@@ -74,13 +68,12 @@ class Model(object):
     self.W3 = self._weight_variable([l2_size, num_classes], W_3)
     self.b3 = self._bias_variable([num_classes], b_3)
 
-    #### TODO ####
     self.log_a_W3 = self._log_a_variable(self.W3.get_shape(), log_a3)#, name="log_a_W3")
 
     if l0 > 0:
       self.W3_masked, self.l0_norm_W3 = self.get_l0_norm_full(self.W3, self.log_a_W3)
       self.pre_softmax = tf.matmul(self.h2, self.W3_masked) + self.b3
-    #### END TODO ####
+
     else:
       self.pre_softmax = tf.matmul(self.h2, self.W3) + self.b3
 
@@ -128,16 +121,13 @@ class Model(object):
     #Compute regularizer
     self.regularizer = self.l2*(tf.reduce_sum(tf.square(self.W1)) + tf.reduce_sum(tf.square(self.W2))
                               + tf.reduce_sum(tf.square(self.W3)))
-    #### TODO ####
+
+    ### When L0 loss is activated the loss is computed differently ###
     if l0 > 0:
       self.regularizer = l0 * (self.l0_norm_W1 + self.l0_norm_W2 + self.l0_norm_W3)
       if l2 > 0:
         self.regularizer += self.l2 * (tf.reduce_sum(tf.square(self.W1_masked)) + tf.reduce_sum(tf.square(self.W2_masked))
               + tf.reduce_sum(tf.square(self.W3_masked)))
-
-
-
-    #### END TODO ####
 
     if reg_stability > 0 :
       self.regularizer = self.regularizer + reg_stability * tf.math.reduce_std(self.h2)
@@ -184,10 +174,9 @@ class Model(object):
   def _weight_variable(shape, initial = None):
       if initial is None:
         W0 = tf.glorot_uniform_initializer()
+        # in case for normal init
+        # initial = tf.glorot_normal_initializer()
         return tf.get_variable(shape=shape, initializer=W0, name=str(np.random.randint(1e10)))
-      #in case for normal init
-      #initial = tf.glorot_normal_initializer()
-      #return tf.get_variable(shape=shape, initializer=initial, name=str(np.random.randint(1e10)))
       else:
         W0 = tf.constant(initial, shape = shape, dtype=tf.float32)
         return tf.Variable(W0)
@@ -210,13 +199,12 @@ class Model(object):
         a0 = tf.constant(initial, shape = shape, dtype=tf.float32)
         return tf.Variable(a0)
 
-#### TODO ####
   def get_l0_norm_full(self, x, log_a):
 
     shape = x.get_shape()
 
     # sample u
-    # TODO Change 1e-6
+    # TODO Add an epsilon of 1e-6
     u = tf.random_uniform(shape)
 
     # compute hard concrete distribution
@@ -227,15 +215,6 @@ class Model(object):
 
     # compute differentiable l0 norm ; cdf_qz
     # Implements the CDF of the 'stretched' concrete distribution
-    #if self.l2 > 0:
-      #q0 = tf.clip_by_value(
-        #tf.sigmoid(temperature * math.log(-limit_0 / limit_1)-log_a),
-        #epsilon, 1-epsilon)
-      #logpw_col = -tf.reduce_sum(- (.5 * self.l2 * tf.square(x)) - lambd, 0)
-      #l0_norm = tf.reduce_sum((1 - q0) * logpw_col)
-    #  #logpb = -tf.reduce_sum((1 - q0) * (.5 * l2 * tf.pow(self.bias, 2) - lambd))
-    #  #logpw #+ logpb
-    #else:
     l0_norm = tf.reduce_sum(tf.clip_by_value(
         tf.sigmoid(log_a - temperature * math.log(-limit_0 / limit_1)),
         epsilon, 1-epsilon))
@@ -249,4 +228,3 @@ class Model(object):
 def hard_sigmoid(x):
     return tf.minimum(tf.maximum(x, tf.zeros_like(x)), tf.ones_like(x))
 
-#### END TODO ####
