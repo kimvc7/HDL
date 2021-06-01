@@ -20,13 +20,18 @@ To use the code for dual Stability:
 3) Then ```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --stable --data_set=cifar --dropout 0.9 --l2 0.1``` for stability or
 ```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --data_set=cifar``` for no stability.
 
-If possible: get the performance on validation set every 500 updates or so.
-TODO:
+# TODO
 
-- Merge MC and StabilityDual in one ```train.py``` to avoid duplication of efforts.
-- Code the GINI index for stability.
-- Code a better architecture for Cifar: using CNN
+1) Adapt the code to receive any dataset as input. Discuss what should be the input format: csv?
 
-A PRIORI DONE:
-- Code the std of the weights using the 10 last logits. Be careful, one std per logit per XX seeds, then averaged the size of test set.
+2) Adapt the FF architectures so that the user can choose an arbitrary FF configuration. This will require major changes to the code to make it modular. 
+- will require to adapt all the losses terms and the feedforward operations written manually for now.
+- will require to define new layer classes to call them easily.
+- will require proper logging of all metrics.
+
+3) Remove any mention to CNN.
+
+4) Remove all unnecessary files.
+
+5) Clean packages and create a requirement.txt and potentially a yaml environment.
 
