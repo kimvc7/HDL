@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Oct 10 20:31:36 2020
-
-@author: Michael
-"""
-
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
