@@ -21,7 +21,7 @@ To train a sparse neural network, add: ```--l0 1e-5```.
 The folder ```src``` contains:
 - ```config.json```: the configuration file to determine some hyperparameters in your experiments.
 - ```input_data.py```: the file to load and prepare the different datasets.
-- ```pgd_attack```: implements the neural network attacks
+- ```pgd_attack```: implements the neural network attacks (Copyright Madry et al)
 - ```train.py```: runs the training. The most important file.
 - ```Networks```: this folder contains the neural network architectures. We provide feed-forward and an old version of CNN_model.py that needs to be adapted to fit this code.
 
