@@ -1,5 +1,12 @@
 # Holistic Deep Learning
 
+This code corresponds to the paper Holistic Deep Learning: https://arxiv.org/abs/2110.15829
+by Dimitris Bertsimas, Léonard Boussioux, Kimberly Villalobos Carballo, Michael Linghzi Li, Alex Paskov, Ivan Paskov.
+
+There is much interest in deep learning to solve challenges that arise in applying neural network models in real-world environments. In particular, three areas have received considerable attention: adversarial robustness, parameter sparsity, and output stability. Despite numerous attempts on solving these problems independently, there is very little work addressing the challenges simultaneously. In this paper, we address this problem of constructing holistic deep learning models by proposing a novel formulation that solves these issues in combination. Real-world experiments on both tabular and MNIST dataset show that our formulation is able to simultaneously improve the accuracy, robustness, stability, and sparsity over traditional deep learning models among many others.
+
+# Introduction to the code
+
 To train a basic feed-forward neural network go to ```src``` and execute:
 
 ```python train.py --batch_range 64 --network size 256 128 --stab_ratio_range 0.8 --l2 1e-5 --data_set uci10 --train_size 0.8 --lr 3e-4 --val_size 0.2```
