@@ -1,37 +1,33 @@
-# HDL
-NOTE: Requires Tensorflow 2 and Keras.
- Modify parameters in config file with the desired values.
- To train with stability run train.py
- To train without stability you need to replace model.max_xent with model.xent inside the Adam Optimizer in file train.py
- Includes code to visualize Tensorboards.
+# Holistic Deep Learning
 
-To use the code for montecarlo Stability:
-1) Go to ```Stability```.
+To train a basic feed-forward neural network go to ```src``` and execute:
 
-2) Then ```python train.py --subset-ratio 0.8 --num-subsets 5 --batch-size 64```
+```python train.py --batch_range 64 --network size 256 128 --stab_ratio_range 0.8 --l2 1e-5 --data_set uci10 --train_size 0.8 --lr 3e-4 --val_size 0.2```
 
-You can choose these parameters directly from the command line and have more modularity in the config file, but these 3 parameters are the most important a priori.
+To train a stable network, add: ```--is_stable``` and tune ```--stab_ratio_range 0.8```.
+E.g., ```python train.py --data_set uci10 --is_stable --stab_ratio_range 0.8```
 
-To use the code for dual Stability:
-1) Go to ```StabilityDual```.
+To train a robust neural network, add: ```-r 1e-3```.
 
-2) Check the ```config.json``` file to put the desired config.
+To train a sparse neural network, add: ```--l0 1e-5```.
 
-3) Then ```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --stable --data_set=cifar --dropout 0.9 --l2 0.1``` for stability or
-```python train.py --ratio_range 0.7 0.8 0.9 --batch_range 16 32 64 128 --data_set=cifar``` for no stability.
+The folder ```src``` contains:
+- ```config.json```: the configuration file to determine some hyperparameters in your experiments.
+- ```input_data.py```: the file to load and prepare the different datasets.
+- ```pgd_attack```: implements the neural network attacks
+- ```train.py```: runs the training. The most important file.
+- ```Networks```: this folder contains the neural network architectures. We provide feed-forward and an old version of CNN_model.py that needs to be adapted to fit this code.
 
-# TODO
+The folder ```utils``` contains:
+- ```utils_print.py```: contains the printing functions.
+- ```utils_model.py```: contains the loss functions and model dictionaries.
+- ```utils_init.py```: contains function to load the different arguments.
+- ```utils_MLP_model.py```: contains initialization function for MLP models. Needs to be adapted for CNNs.
+- ```utils.py```: contains miscellaneous elements.
 
-1) Adapt the code to receive any dataset as input. Discuss what should be the input format: csv?
+You can modify parameters in the config file with the desired values.
 
-2) Adapt the FF architectures so that the user can choose an arbitrary FF configuration. This will require major changes to the code to make it modular. 
-- will require to adapt all the losses terms and the feedforward operations written manually for now.
-- will require to define new layer classes to call them easily.
-- will require proper logging of all metrics.
+The documentation is a work in progress and will be updated soon.
 
-3) Remove any mention to CNN.
 
-4) Remove all unnecessary files.
-
-5) Clean packages and create a requirement.txt and potentially a yaml environment.
 
