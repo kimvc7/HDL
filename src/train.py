@@ -9,9 +9,7 @@ from __future__ import print_function
 import sys
 sys.path.append('../utils')
 
-import importlib.machinery
 import importlib.util
-from datetime import datetime
 import json
 import os
 from timeit import default_timer as timer

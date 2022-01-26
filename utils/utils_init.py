@@ -25,7 +25,7 @@ def define_parser():
 
 	parser.add_argument("--reg_stability", type=float, default=0, help="reg stability regularization parameter")
 
-	parser.add_argument("--data_set", type=str, default="mnist", help="number of subsets")
+	parser.add_argument("--data_set", type=str, default="mnist", help="dataset name")
 
 	parser.add_argument("--train_size", type=float, default=0.80, help="percentage of data used of training")
 

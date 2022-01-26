@@ -1,8 +1,12 @@
-import keras
+import tensorflow.keras as keras
 import collections
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import random_seed
 import numpy as np
+
+#Uncomment to download MNIST/CIFAR/... if you have a bug
+#import ssl
+#ssl._create_default_https_context = ssl._create_unverified_context
 
 _Datasets = collections.namedtuple('_Datasets', ['train', 'validation', 'test'])
 
@@ -26,11 +30,11 @@ class _DataSet(object):
       num_subsets: Number of training subsets for stability
       subset_ratio: fraction of original training set that must be in each subset.
     """
-     # Convert shape from [num examples, rows, columns, depth]
-     # to [num examples, rows*columns] (assuming depth == 1)
 
     seed1, seed2 = random_seed.get_seed(seed)
     np.random.seed(seed1 if seed is None else seed2)
+    # Convert shape from [num examples, rows, columns, depth]
+    # to [num examples, rows*columns] (assuming depth == 1)
     if reshape:
       labels = labels.reshape(labels.shape[0])    
       images = images.reshape(images.shape[0], num_features)
@@ -109,8 +113,11 @@ class _DataSet(object):
 
 
 def load_data_set(training_size, validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32):
-  if data_set == "cifar":
+  if data_set == "cifar10":
     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+    num_features = X_train.shape[1] * X_train.shape[2] * X_train.shape[3]
+  if data_set == "fashion_mnist":
+    (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
     num_features = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
   if data_set == "mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
@@ -123,9 +130,9 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
     full_data = np.load("../UCI/data" + str(uci_num) + ".pickle", allow_pickle=True)
     X_train, X_test, y_train, y_test = full_data['x_train'], full_data['x_test'], full_data['y_train'], full_data[
       'y_test']
-    print(X_train.shape)
-    print(np.std(X_train, axis=0))
-    print(np.mean(X_train, axis=0))
+    print("Training data shape:", X_train.shape)
+    print("Training data Std:", np.std(X_train, axis=0))
+    print("Training data Mean:", np.mean(X_train, axis=0))
     num_features = X_train.shape[1]
 
   #Permute data
@@ -148,9 +155,9 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
     X_train = (X_train - m)/s
     X_val = (X_val - m) / s
     X_test = (X_test - m)/s
-    print(X_train.shape)
-    print(np.std(X_train, axis=0))
-    print(np.mean(X_train, axis=0))
+    print("Training data shape:", X_train.shape)
+    print("Training data Std:", np.std(X_train, axis=0))
+    print("Training data Mean:", np.mean(X_train, axis=0))
   print("There are", X_train.shape[0], "samples in the training set.")
   print("There are", X_val.shape[0], "samples in the validation set.")
 
