@@ -12,6 +12,7 @@ To train a basic feed-forward neural network go to ```src``` and execute:
 ```python3 train.py --batch_range 64 --network_size 256 128 --l2 1e-5 --data_set uci10 --train_size 0.8 --lr 3e-4 ```
 
 To train a stable network, add: ```--is_stable``` and tune ```--stab_ratio_range 0.8```.
+
 E.g., ```python train.py --data_set uci10 --is_stable --stab_ratio_range 0.8```
 
 To train a robust neural network, add: ```-r 1e-3``` and tune the regularization value.
@@ -23,7 +24,7 @@ The folder ```src``` contains:
 - ```input_data.py```: the file to load and prepare the different datasets.
 - ```pgd_attack```: implements the neural network attacks (Copyright Madry et al)
 - ```train.py```: runs the training. The most important file.
-- ```Networks```: this folder contains the neural network architectures. We provide feed-forward and an old version of CNN_model.py that needs to be adapted to fit this code.
+- ```Networks```: this folder contains the neural network architectures. We provide feed-forward and convolutional neural networks that can be combined into a desired network.
 
 The folder ```utils``` contains:
 - ```utils_print.py```: contains the printing functions.
@@ -34,7 +35,7 @@ The folder ```utils``` contains:
 
 You can modify parameters in the config file with the desired values.
 
-The documentation is a work in progress and will be updated soon.
+The documentation is in progress and will be updated soon.
 
 
 
