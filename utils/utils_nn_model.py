@@ -11,19 +11,8 @@ def init_sparsity_constants():
 	lambd = 1
 	return limit_0, limit_1, temperature, epsilon, lambd
 
-def init_MLP_vars():
-	# Load config file with static parameters
-	with open('config.json') as config_file:
-		config = json.load(config_file)
 
-	network_vars_w = config['network_weights']
-	network_vars_b = config['network_biases']
-	stable_var = config['stability_variable']
-	sparse_vars = config['sparsity_variables']
-
-	return network_vars_w, network_vars_b, stable_var, sparse_vars
-
-def init_MLP_weights(network_vars_w, network_vars_b, stable_var, sparse_vars):
+def init_weights(network_vars_w, network_vars_b, stable_var, sparse_vars):
 	weights = [None for i in range(len(network_vars_w))]
 	biases = [None for i in range(len(network_vars_b))]
 	theta = None

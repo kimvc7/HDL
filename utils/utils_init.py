@@ -2,12 +2,27 @@ import argparse
 import utils_model
 from datetime import datetime
 
+
+VGG = [[3, 3, 64], [3, 3, 64], [3, 3, 128], [3, 3, 128], [3, 3, 256], [3, 3, 256], [3, 3, 256],
+		[3, 3, 512], [3, 3, 512], [3, 3, 512], [3, 3, 512], [3, 3, 512], [3, 3, 512], [4096], [4096], [1000]]
+
+VGG_POOL = [False, True, False, True, False, False, True, False, False, True, False, False, True, False, False, False]
+
+
+VGG3 =[[3, 3, 32], [3, 3, 32], [3, 3, 32], [64], [64]]
+
+VGG3_POOL = [False, True, True, False, False]
+
 def define_parser():
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 	parser.add_argument("--batch_range", type=int, nargs='+', default=[64], help="batch range")
 
-	parser.add_argument("--network_size", type=int, nargs='+', default=[256, 128], help="size of network layers")
+	parser.add_argument("--network_size", type=int, nargs='+', default=VGG3, help="size of network layers")
+
+	parser.add_argument("--model_path", type=str, default="VGG_model", help="model file name")
+
+	parser.add_argument("--pool_size", type=int, nargs='+', default=VGG3_POOL, help="pool indicator of network layers")
 
 	parser.add_argument("--stab_ratio_range", type=float, nargs='+', default=[0.8], help="stability ratio range")
 
@@ -45,12 +60,23 @@ def read_config_train(config):
 
 	return seed, max_train_steps, num_output_steps, num_summ_steps, num_check_steps
 
-def read_config_network(config, model):
-	network_vars_w = [getattr(model, var) for var in  config['network_weights']]
-	network_vars_b = [getattr(model, var) for var in  config['network_biases']]
+
+def init_vars(n):
+	network_vars_w = ["W"+str(i+1) for i in range(n)]
+	network_vars_b = ["b"+str(i+1) for i in range(n)]
+	stable_var = "theta"
+	sparse_vars = ["log_a_W"+str(i+1) for i in range(n)]
+
+	return network_vars_w, network_vars_b, stable_var, sparse_vars
+
+
+def read_config_network(config, args, model):
+	name_vars_w, name_vars_b, name_stable_var, name_sparse_vars = init_vars(len(args.network_size)+1)
+	network_vars_w = [getattr(model, var) for var in  name_vars_w]
+	network_vars_b = [getattr(model, var) for var in  name_vars_b]
 	network_vars = network_vars_w + network_vars_b 
-	sparsity_vars = [getattr(model, var) for var in  config['sparsity_variables']]
-	stable_var = [getattr(model, config['stability_variable'])]
+	sparsity_vars = [getattr(model, var) for var in  name_sparse_vars]
+	stable_var = [getattr(model, name_stable_var)]
 
 	return network_vars, sparsity_vars, stable_var
 
@@ -64,8 +90,10 @@ def read_train_args(args):
 	stab_ratio_range = args.stab_ratio_range
 	dropout = args.dropout
 	network_size = args.network_size
+	pool_size = args.pool_size
+	model_path = args.model_path
 
-	return rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size
+	return rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, model_path
 
 def read_data_args(args):
 	data_set = args.data_set

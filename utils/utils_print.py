@@ -5,14 +5,17 @@ from utils import total_gini
 import tensorflow.compat.v1 as tf
 import json
 from pgd_attack import LinfPGDAttack
-from utils_MLP_model import init_MLP_vars
+import utils_init 
 
 with open('config.json') as config_file:
     config = json.load(config_file)
 
-w_vars, b_vars, stable_var, sparse_vars = init_MLP_vars()
 
 def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, dict_exp, experiment, global_step):
+
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+
+
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
     test_acc = sess.run(model.accuracy, feed_dict=test_dict)
     val_acc = sess.run(model.accuracy, feed_dict=val_dict)
@@ -20,7 +23,7 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
     stable_xent = sess.run(model.stable_xent, feed_dict=nat_dict)
     robust_xent = sess.run(model.robust_xent, feed_dict=nat_dict)
     robust_stable_xent = sess.run(model.robust_stable_xent, feed_dict=nat_dict)
-    stable_var = sess.run(getattr(model, config['stability_variable']), feed_dict=nat_dict)
+    stable_var = sess.run(getattr(model, stable_var), feed_dict=nat_dict)
 
 
     print('Step {}:    ({})'.format(ii, datetime.now()))
@@ -90,6 +93,8 @@ def update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp):
 
 def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, tot_test_acc, max_train_steps, network_path):
 
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    
     avg_test_acc = tot_test_acc / num_experiments
     std = np.array([float(k) for k in dict_exp['test_accs']]).std()
     logit_stability = np.mean(np.std(dict_exp['logits_acc'], axis=0), axis=0)
@@ -105,7 +110,7 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
     print("  Gini stability", gini_stability)
 
 
-    weights_stability = print_layer_stability_ff(dict_exp, num_experiments)
+    weights_stability = print_layer_stability(dict_exp, num_experiments, args)
     weights_nonzero = [np.mean(dict_exp[w_vars[i]]) for i in range(len(w_vars))]
 
     for i in range(len(w_vars)):
@@ -161,7 +166,9 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         writer.writerow(cols)
 
 
-def print_layer_stability_ff(dict_exp, num_experiments):
+def print_layer_stability(dict_exp, num_experiments, args):
+
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
 
     stabilities = []
     for i in range(len(w_vars)):

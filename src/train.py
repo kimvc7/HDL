@@ -27,12 +27,6 @@ tf.disable_v2_behavior()
 with open('config.json') as config_file:
 	config = json.load(config_file)
 
-#Import Network Model
-network_path = config["network_path"]
-#loader = importlib.machinery.SourceFileLoader('Model', './Networks/' + network_path + '.py')
-spec = importlib.util.spec_from_file_location(network_path, './Networks/' + network_path + '.py')
-network_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(network_module)
 
 
 # Parse arguments
@@ -42,8 +36,16 @@ args = parser.parse_args()
 
 # Set up training parameters
 seed, max_train_steps, num_output_steps, num_summary_steps, num_check_steps = read_config_train(config)
-rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size = read_train_args(args)
+rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, network_path = read_train_args(args)
 data_set, train_size, val_size = read_data_args(args)
+
+#Import Network Model
+
+#loader = importlib.machinery.SourceFileLoader('Model', './Networks/' + network_path + '.py')
+spec = importlib.util.spec_from_file_location(network_path, './Networks/' + network_path + '.py')
+network_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(network_module)
+
 
 
 # Training Initializitation
@@ -66,9 +68,9 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 	num_classes = np.unique(data.train.labels).shape[0]
 
 	# Set up model and optimizer
-	model = network_module.Model(num_classes, batch_size, network_size, subset_ratio, num_features, dropout, l2, l0, rho)
+	model = network_module.Model(num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, dropout, l2, l0, rho)
 	loss = utils_model.get_loss(model, args)
-	network_vars, sparse_vars, stable_var = read_config_network(config, model)
+	network_vars, sparse_vars, stable_var = read_config_network(config, args, model)
 
 	var_list = network_vars
 	if args.l0 > 0:
@@ -127,6 +129,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 				if train_step % num_output_steps == 0:
 
 					# Update results
+					logits = sess.run(model.logits, feed_dict=val_dict)
+
 					dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)
 
 					# Print and Save current status
@@ -157,7 +161,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 			total_test_acc += test_acc
 			x_test, y_test = data.test.images, data.test.labels.reshape(-1)
 			best_model = utils_model.get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module)
-			utils_print.update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp)
+			#utils_print.update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp)
 
 
 	utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, total_test_acc, max_train_steps, network_path)

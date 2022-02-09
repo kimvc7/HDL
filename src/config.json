@@ -4,8 +4,8 @@
 
   "_comment": "===== TRAINING CONFIGURATION =====",
   "random_seed": 4557077,
-  "max_num_training_steps": 2000,
-  "num_output_steps": 1000,
+  "max_num_training_steps": 3,
+  "num_output_steps": 1,
   "num_summary_steps": 100,
   "num_checkpoint_steps": 300,
   "subset_ratio": 0.8,
@@ -16,15 +16,6 @@
   "initial_learning_rate": 1e-3,
   "constant_learning_rate": 1e-4,
   "num_experiments": 2,
-
-  "_comment": "===== NETWORK CONFIGURATION =====",
-  "network_path": "MLP_model", 
-  "network_weights": ["W1", "W2", "W3"],
-  "network_biases": [ "b1", "b2", "b3"],
-  "sparsity_variables": ["log_a_W1", "log_a_W2", "log_a_W3"],
-  "stability_variable": "theta",
-  "num_channels": 0,
-
 
   "_comment": "=====ADVERSARIAL EXAMPLES CONFIGURATION=====",
   "k": 40,

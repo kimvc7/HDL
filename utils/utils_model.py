@@ -1,17 +1,13 @@
 import numpy as np
 import json
 import tensorflow.compat.v1 as tf
+import math
 tf.disable_v2_behavior()
 
 with open('config.json') as config_file:
     config = json.load(config_file)
 
-from utils_MLP_model import init_MLP_vars
-
-w_vars, b_vars, stable_var, sparse_vars = init_MLP_vars()
-mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
-
-
+import utils_init 
 
 
 def get_loss(model, args):
@@ -29,14 +25,19 @@ def get_loss(model, args):
 
 
 def create_dict(args, num_classes, num_features, train_shape, test_size):
+
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
+
+
     dict_exp = {}
     dict_exp['logits_acc'] = np.zeros((config['num_experiments'], test_size[0], num_classes))
     layer_sizes = [num_features] +  args.network_size + [num_classes]
 
     for i in range(len(w_vars)):
-        dict_exp[w_vars[i]] = np.zeros((config['num_experiments'], layer_sizes[i], layer_sizes[i+1]))
-        dict_exp[b_vars[i]] = np.zeros((config['num_experiments'], layer_sizes[i+1]))
-        dict_exp[sparse_vars[i]] = np.zeros((config['num_experiments'], layer_sizes[i], layer_sizes[i+1]))
+        dict_exp[w_vars[i]] = None
+        dict_exp[b_vars[i]] = None
+        dict_exp[sparse_vars[i]] = None
         dict_exp[w_vars[i] + '_nonzero'] = np.zeros(config['num_experiments'])
         dict_exp[w_vars[i] + '_killed_neurons'] = np.zeros(config['num_experiments'])
         dict_exp[w_vars[i] + '_killed_input_features'] = np.zeros(config['num_experiments'])
@@ -52,9 +53,18 @@ def create_dict(args, num_classes, num_features, train_shape, test_size):
 
 def update_dict(dict_exp, args, sess, model, test_dict, experiment):
 
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
+
     dict_exp[stable_var][experiment] = sess.run(getattr(model, stable_var))
 
     for i in range(len(w_vars)):
+        if dict_exp[b_vars[i]] is None:
+            dict_exp[b_vars[i]]  = np.array([sess.run(getattr(model, b_vars[i]))]*config['num_experiments'])
+            dict_exp[sparse_vars[i]]  = np.array([sess.run(getattr(model, sparse_vars[i]))]*config['num_experiments'])
+            dict_exp[w_vars[i]] = np.array([sess.run(getattr(model, w_vars[i]))]*config['num_experiments'])
+
+
         dict_exp[b_vars[i]][experiment] = sess.run(getattr(model, b_vars[i]))
         dict_exp[sparse_vars[i]][experiment] = sess.run(getattr(model, sparse_vars[i]))
 
@@ -62,8 +72,8 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
         if args.l0 > 0:
             W_masked =  sess.run(getattr(model, mask_names[i]))
             dict_exp[w_vars[i] + '_nonzero'][experiment] = sum( W_masked.reshape(-1)  >0)/ W_masked.reshape(-1).shape[0] 
-            dict_exp[w_vars[i] + '_killed_neurons'][experiment] = sum(np.sum(W_masked, axis=0) == 0)
-            dict_exp[w_vars[i] + '_killed_input_features'][experiment] =  sum(np.sum(W_masked, axis=1) == 0)
+            dict_exp[w_vars[i] + '_killed_neurons'][experiment] = sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=0) == 0)
+            dict_exp[w_vars[i] + '_killed_input_features'][experiment] =  sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=1) == 0)
             dict_exp[w_vars[i]][experiment] = W_masked
         else:
             W = sess.run(getattr(model, w_vars[i]))
@@ -78,6 +88,11 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
     return dict_exp
 
 def get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module):
+
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
+
+
     spec.loader.exec_module(network_module)
     
     weights = [dict_exp[w][experiment] for w in w_vars]
@@ -91,7 +106,8 @@ def get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_r
     stored_weights['stability_variable'] = stab_weight
     stored_weights['sparsity_variables'] = sparse_weights
 
-    best_model = network_module.Model(num_classes, batch_size, args.network_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.rho , stored_weights)
+
+    best_model = network_module.Model(num_classes, batch_size, args.network_size, args.pool_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.rho , stored_weights)
     return best_model
     
 
