@@ -9,7 +9,11 @@ VGG = [[3, 3, 64], [3, 3, 64], [3, 3, 128], [3, 3, 128], [3, 3, 256], [3, 3, 256
 VGG_POOL = [False, True, False, True, False, False, True, False, False, True, False, False, True, False, False, False]
 
 
-VGG3 =[[5, 5, 32], [5, 5, 64], [1024]]
+ALEX =[[5, 5, 32], [5, 5, 64], [1024]]
+
+ALEX_POOL = [True, True, False]
+
+VGG3 =[[3, 3, 64], [3, 3, 64], [1000]]
 
 VGG3_POOL = [True, True, False]
 
