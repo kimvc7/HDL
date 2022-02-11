@@ -3,30 +3,32 @@ import utils_model
 from datetime import datetime
 
 
-VGG = [[3, 3, 64], [3, 3, 64], [3, 3, 128], [3, 3, 128], [3, 3, 256], [3, 3, 256], [3, 3, 256],
-		[3, 3, 512], [3, 3, 512], [3, 3, 512], [3, 3, 512], [3, 3, 512], [3, 3, 512], [4096], [4096], [1000]]
+VGG16 = ((3, 3, 64), (3, 3, 64), (3, 3, 128), (3, 3, 128), (3, 3, 256), (3, 3, 256), (3, 3, 256),
+		(3, 3, 512), (3, 3, 512), (3, 3, 512), (3, 3, 512), (3, 3, 512), (3, 3, 512), (4096,), (4096,), (1000,))
+VGG16_POOL = (False, True, False, True, False, False, True, False, False, True, False, False, True, False, False, False)
 
-VGG_POOL = [False, True, False, True, False, False, True, False, False, True, False, False, True, False, False, False]
+
+ALEX =((5, 5, 32), (5, 5, 64), (1024,))
+ALEX_POOL = (True, True, False)
+
+VGG3 =((3, 3, 64), (3, 3, 64), (1000,))
+VGG3_POOL = (True, True, False)
+
+MLP = (256, 128)
+MLP_POOL = (False, False)
 
 
-ALEX =[[5, 5, 32], [5, 5, 64], [1024]]
+NN = {"MLP":MLP, "ALEX":ALEX, "VGG3":VGG3, "VGG16":VGG16}
+NN_POOL = {"MLP":MLP_POOL, "ALEX":ALEX_POOL, "VGG3":VGG3_POOL, "VGG16":VGG16_POOL}
+NN_PATH = {"MLP":"MLP_model", "ALEX":"CNN_model", "VGG3":"CNN_model", "VGG16":"CNN_model"}
 
-ALEX_POOL = [True, True, False]
-
-VGG3 =[[3, 3, 64], [3, 3, 64], [1000]]
-
-VGG3_POOL = [True, True, False]
 
 def define_parser():
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 	parser.add_argument("--batch_range", type=int, nargs='+', default=[64], help="batch range")
 
-	parser.add_argument("--network_size", type=int, nargs='+', default=VGG3, help="size of network layers")
-
-	parser.add_argument("--model_path", type=str, default="VGG_model", help="model file name")
-
-	parser.add_argument("--pool_size", type=int, nargs='+', default=VGG3_POOL, help="pool indicator of network layers")
+	parser.add_argument("--network_type", type=str,  default="VGG3", help="network used for training")
 
 	parser.add_argument("--stab_ratio_range", type=float, nargs='+', default=[0.8], help="stability ratio range")
 
@@ -75,7 +77,8 @@ def init_vars(n):
 
 
 def read_config_network(config, args, model):
-	name_vars_w, name_vars_b, name_stable_var, name_sparse_vars = init_vars(len(args.network_size)+1)
+	network_size = list(NN[args.network_type])
+	name_vars_w, name_vars_b, name_stable_var, name_sparse_vars = init_vars(len(network_size)+1)
 	network_vars_w = [getattr(model, var) for var in  name_vars_w]
 	network_vars_b = [getattr(model, var) for var in  name_vars_b]
 	network_vars = network_vars_w + network_vars_b 
@@ -93,9 +96,9 @@ def read_train_args(args):
 	batch_range = args.batch_range
 	stab_ratio_range = args.stab_ratio_range
 	dropout = args.dropout
-	network_size = args.network_size
-	pool_size = args.pool_size
-	model_path = args.model_path
+	network_size = list(NN[args.network_type])
+	pool_size = list(NN_POOL[args.network_type])
+	model_path = NN_PATH[args.network_type]
 
 	return rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, model_path
 

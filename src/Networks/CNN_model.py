@@ -16,13 +16,13 @@ from utils_nn_model import *
 limit_0, limit_1, temperature, epsilon, lambd = init_sparsity_constants()
 
 class Model(object):
-	def __init__(self, num_classes, batch_size, vgg_size, pool_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, rho=0, stored_weights=None, image_size=None):
+	def __init__(self, num_classes, batch_size, cnn_size, pool_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, rho=0, stored_weights=None, image_size=None):
 		self.dropout = dropout
 		self.subset_ratio = subset_ratio
 		self.rho =  rho
 		self.l2 = l2
 
-		w_vars, b_vars, stable_var, sparse_vars = init_vars(len(vgg_size) + 1)
+		w_vars, b_vars, stable_var, sparse_vars = init_vars(len(cnn_size) + 1)
 		weights, biases, stab_weight, sparse_weights = init_weights(w_vars, b_vars, stable_var, sparse_vars)
 		if stored_weights is not None:
 			weights, biases, stab_weight, sparse_weights = reset_stored_weights(stored_weights)
@@ -36,8 +36,8 @@ class Model(object):
 				reduced_size = [math.ceil(reduced_size[0]/2), math.ceil(reduced_size[1]/2)]
 
 
-		layer_sizes = [image_size] + vgg_size + [[num_classes]]
-		layer_names = ["x_image"] + [str("h") + str(l) for l in range(len(vgg_size)+1)]
+		layer_sizes = [image_size] + cnn_size + [[num_classes]]
+		layer_names = ["x_image"] + [str("h") + str(l) for l in range(len(cnn_size)+1)]
 		mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
 		norm_names = [w_vars[l] + str("_norm") for l in range(len(w_vars))]
 
@@ -89,7 +89,7 @@ class Model(object):
 		previous_layer = layer_names[0]
 		for l in range(len(w_vars)):
 
-			if l < len(vgg_size) and 0 < l:
+			if l < len(cnn_size) and 0 < l:
 				if len(layer_sizes[l+1]) == 1 and len(layer_sizes[l]) >1: #Flatten for first dense layer
 					flat_layer = tf.reshape(getattr(self, previous_layer), [-1, reduced_size[0]*reduced_size[1]*layer_sizes[l][2]])
 					setattr(self, "flat", flat_layer) 
@@ -107,7 +107,7 @@ class Model(object):
 			
 			previous_layer = layer_names[l+1]
 
-			if l < len(vgg_size):
+			if l < len(cnn_size):
 
 				if pool_size[l]:
 					pool_layer = self._max_pool_2x2(getattr(self, layer_names[l+1]))

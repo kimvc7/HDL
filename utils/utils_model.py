@@ -25,14 +25,14 @@ def get_loss(model, args):
 
 
 def create_dict(args, num_classes, num_features, train_shape, test_size):
-
-    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    network_size = list(utils_init.NN[args.network_type])
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
     mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
 
 
     dict_exp = {}
     dict_exp['logits_acc'] = np.zeros((config['num_experiments'], test_size[0], num_classes))
-    layer_sizes = [num_features] +  args.network_size + [num_classes]
+    layer_sizes = [num_features] +  network_size + [num_classes]
 
     for i in range(len(w_vars)):
         dict_exp[w_vars[i]] = None
@@ -52,8 +52,8 @@ def create_dict(args, num_classes, num_features, train_shape, test_size):
 
 
 def update_dict(dict_exp, args, sess, model, test_dict, experiment):
-
-    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    network_size = list(utils_init.NN[args.network_type])
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
     mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
 
     dict_exp[stable_var][experiment] = sess.run(getattr(model, stable_var))
@@ -88,8 +88,8 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
     return dict_exp
 
 def get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module):
-
-    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    network_size = list(utils_init.NN[args.network_type])
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
     mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
 
 

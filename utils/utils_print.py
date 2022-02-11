@@ -12,8 +12,8 @@ with open('config.json') as config_file:
 
 
 def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, dict_exp, experiment, global_step):
-
-    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    network_size = list(utils_init.NN[args.network_type])
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
 
 
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
@@ -92,8 +92,8 @@ def update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp):
 
 
 def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, tot_test_acc, max_train_steps, network_path):
-
-    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    network_size = list(utils_init.NN[args.network_type])
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
     
     avg_test_acc = tot_test_acc / num_experiments
     std = np.array([float(k) for k in dict_exp['test_accs']]).std()
@@ -152,7 +152,7 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
                 cols += [np.mean(dict_exp[key])]
 
         cols += [np.mean(dict_exp['adv_test_accs'][rho]) for rho in args.robust_test]
-        cols += [args.is_stable, args.rho,  args.train_size, args.l2, args.l0, args.network_size, args.lr]
+        cols += [args.is_stable, args.rho,  args.train_size, args.l2, args.l0, network_size, args.lr]
         cols += weights_nonzero
         cols += weights_stability
         cols += [std, logit_stability, gini_stability ] 
@@ -167,8 +167,8 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
 
 
 def print_layer_stability(dict_exp, num_experiments, args):
-
-    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(args.network_size)+1)
+    network_size = list(utils_init.NN[args.network_type])
+    w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
 
     stabilities = []
     for i in range(len(w_vars)):
