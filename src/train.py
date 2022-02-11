@@ -129,8 +129,6 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 				if train_step % num_output_steps == 0:
 
 					# Update results
-					logits = sess.run(model.logits, feed_dict=val_dict)
-
 					dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment)
 
 					# Print and Save current status
@@ -139,6 +137,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 				  
 					# Track best validation accuracy
 					val_acc = sess.run(model.accuracy, feed_dict=val_dict)
+
 					if val_acc > best_val_acc and train_step > min_train_steps:
 						best_val_acc = val_acc
 						num_iters = train_step
@@ -161,7 +160,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 			total_test_acc += test_acc
 			x_test, y_test = data.test.images, data.test.labels.reshape(-1)
 			best_model = utils_model.get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module)
-			#utils_print.update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp)
+			utils_print.update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp)
 
 
 	utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, total_test_acc, max_train_steps, network_path)

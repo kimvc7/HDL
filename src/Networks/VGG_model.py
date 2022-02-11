@@ -171,8 +171,9 @@ class Model(object):
 	@staticmethod
 	def _weight_variable(shape, initial = None):
 			if initial is None:
-				W0 = tf.glorot_uniform_initializer()
-				return tf.get_variable(shape=shape, initializer=W0, name=str(np.random.randint(1e10)))
+				#W0 = tf.glorot_uniform_initializer()
+				#return tf.get_variable(shape=shape, initializer=W0, name=str(np.random.randint(1e10)))
+				return tf.Variable(tf.truncated_normal(shape, stddev=0.1))
 
 			else:
 				W0 = tf.constant(initial, shape = shape, dtype=tf.float32)

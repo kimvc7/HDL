@@ -9,9 +9,9 @@ VGG = [[3, 3, 64], [3, 3, 64], [3, 3, 128], [3, 3, 128], [3, 3, 256], [3, 3, 256
 VGG_POOL = [False, True, False, True, False, False, True, False, False, True, False, False, True, False, False, False]
 
 
-VGG3 =[[3, 3, 32], [3, 3, 32], [3, 3, 32], [64], [64]]
+VGG3 =[[5, 5, 32], [5, 5, 64], [1024]]
 
-VGG3_POOL = [False, True, True, False, False]
+VGG3_POOL = [True, True, False]
 
 def define_parser():
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -44,7 +44,7 @@ def define_parser():
 
 	parser.add_argument("--train_size", type=float, default=0.80, help="percentage of data used of training")
 
-	parser.add_argument("--lr", type=float, default=0.001, help="learning Rate used for the optimizer")
+	parser.add_argument("--lr", type=float, default=0.0001, help="learning Rate used for the optimizer")
 
 	parser.add_argument("--val_size", type=float, default=0.20, help="percentage of data used for validation")
 
