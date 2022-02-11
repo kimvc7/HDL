@@ -118,7 +118,7 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
     num_features = X_train.shape[1] * X_train.shape[2] * X_train.shape[3]
   if data_set == "fashion_mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
-    num_features = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
+    num_features = X_train.shape[1]*X_train.shape[2]
   if data_set == "mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
     if not reshape:
