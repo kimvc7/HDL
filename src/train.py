@@ -69,7 +69,6 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 
 	# Set up model and optimizer
 	model = network_module.Model(num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, dropout, l2, l0, rho)
-	print(model.summary())
 	loss = utils_model.get_loss(model, args)
 	network_vars, sparse_vars, stable_var = read_config_network(config, args, model)
 
