@@ -28,7 +28,7 @@ def define_parser():
 
 	parser.add_argument("--batch_range", type=int, nargs='+', default=[64], help="batch range")
 
-	parser.add_argument("--network_type", type=str,  default="VGG3", help="network used for training")
+	parser.add_argument("--network_type", type=str,  default="VGG3", help="network used for training (ALEX, VGG3, VGG16, MLP)")
 
 	parser.add_argument("--stab_ratio_range", type=float, nargs='+', default=[0.8], help="stability ratio range")
 
