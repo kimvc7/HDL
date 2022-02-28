@@ -87,7 +87,7 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
 
     return dict_exp
 
-def get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module):
+def get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module, network_size, pool_size, data_shape):
     network_size = list(utils_init.NN[args.network_type])
     w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
     mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
@@ -107,7 +107,7 @@ def get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_r
     stored_weights['sparsity_variables'] = sparse_weights
 
 
-    best_model = network_module.Model(num_classes, batch_size, args.network_size, args.pool_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.rho , stored_weights)
+    best_model = network_module.Model(num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.rho , data_shape, stored_weights)
     return best_model
     
 

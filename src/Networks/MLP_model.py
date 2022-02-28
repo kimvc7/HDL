@@ -15,7 +15,7 @@ from utils_nn_model import *
 limit_0, limit_1, temperature, epsilon, lambd = init_sparsity_constants()
 
 class Model(object):
-  def __init__(self, num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, rho=0, stored_weights=None):
+  def __init__(self, num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, dropout = 1, l2 = 0, l0 = 0, rho=0, image_size=None, stored_weights=None):
     self.dropout = dropout
     self.subset_ratio = subset_ratio
     self.rho =  rho

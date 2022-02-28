@@ -38,6 +38,7 @@ args = parser.parse_args()
 seed, max_train_steps, num_output_steps, num_summary_steps, num_check_steps = read_config_train(config)
 rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, network_path = read_train_args(args)
 data_set, train_size, val_size = read_data_args(args)
+data_shape_size = 4
 
 #Import Network Model
 
@@ -63,12 +64,18 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 	print("Batch Size:", batch_size, " ; stability subset ratio:", subset_ratio, " ; dropout value:", dropout)
 
 	# Set up data 
-	data = input_data.load_data_set(training_size = train_size, validation_size= val_size, data_set=data_set, seed=seed)
+	data, data_shape = input_data.load_data_set(training_size = train_size, validation_size= val_size, data_set=data_set, seed=seed)
+
+	if len(data_shape) != data_shape_size:
+		data_shape = None
+	else:
+		data_shape = data_shape[1:]
+
 	num_features = data.train.images.shape[1]
 	num_classes = np.unique(data.train.labels).shape[0]
 
 	# Set up model and optimizer
-	model = network_module.Model(num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, dropout, l2, l0, rho)
+	model = network_module.Model(num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, dropout, l2, l0, rho, data_shape)
 	loss = utils_model.get_loss(model, args)
 	network_vars, sparse_vars, stable_var = read_config_network(config, args, model)
 
@@ -100,7 +107,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 		# Shuffle and split training/vaidation/testing sets
 
 		seed_i = seed*(experiment+1)
-		data = input_data.load_data_set(training_size = train_size, validation_size=val_size, data_set=data_set, seed=seed_i)
+		data, xx = input_data.load_data_set(training_size = train_size, validation_size=val_size, data_set=data_set, seed=seed_i)
 
 		# Set up data sets for validation and testing
 		val_dict = {model.x_input: data.validation.images,
@@ -159,7 +166,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 			utils_print.update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters)
 			total_test_acc += test_acc
 			x_test, y_test = data.test.images, data.test.labels.reshape(-1)
-			best_model = utils_model.get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module)
+			best_model = utils_model.get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module, network_size, pool_size, data_shape)
 			utils_print.update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp)
 
 

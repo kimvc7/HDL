@@ -12,7 +12,7 @@
   "training_size": 50000,
   "validation_size": 10000,
   "testing_size": 10000,
-  "batch_size": 64,
+  "batch_size": 4,
   "initial_learning_rate": 1e-3,
   "constant_learning_rate": 1e-4,
   "num_experiments": 2,

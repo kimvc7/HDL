@@ -166,5 +166,5 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
   train = _DataSet(X_train, y_train, **options )
   validation = _DataSet(X_val, y_val, **options)
   test = _DataSet(X_test, y_test, **options)
-
-  return _Datasets(train=train, validation=validation, test=test)
+  
+  return _Datasets(train=train, validation=validation, test=test), X_train.shape
