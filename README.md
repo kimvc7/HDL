@@ -11,8 +11,10 @@ To train a basic feed-forward neural network go to ```src``` and execute:
 
 ```python3 train.py --batch_range 64 --network_size 256 128 --l2 1e-5 --data_set uci10 --train_size 0.8 --lr 3e-4 ```
 
-To train a VGG network:
-```python3 train.py --data_set mnist --network_type VGG16```
+To train a VGG3 network:
+```python3 train.py --data_set mnist --network_type VGG3```
+
+Overall, one can replace VGG3 by pre-supported architectures, such as ALEX (AlexNet) or VGG16. You can develop your own network architecture and name it.
 
 To train a stable network, add: ```--is_stable``` and tune ```--stab_ratio_range 0.8```.
 
