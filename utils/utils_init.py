@@ -15,13 +15,17 @@ ALEX_POOL = (True, True, False)
 VGG3 = ((3, 3, 64), (3, 3, 64), (1000,))
 VGG3_POOL = (True, True, False)
 
+#VGG7 architecture
+VGG7 = ((3, 3, 32), (3, 3, 32), (3, 3, 64), (3, 3, 64), (3, 3, 128), (3, 3, 128), (128,))
+VGG7_POOL = (False, True, False, True, False, True, False)
+
 MLP = (256, 128)
 MLP_POOL = (False, False)
 
 
-NN = {"MLP":MLP, "ALEX":ALEX, "VGG3":VGG3, "VGG16":VGG16}
-NN_POOL = {"MLP":MLP_POOL, "ALEX":ALEX_POOL, "VGG3":VGG3_POOL, "VGG16":VGG16_POOL}
-NN_PATH = {"MLP":"MLP_model", "ALEX":"CNN_model", "VGG3":"CNN_model", "VGG16":"CNN_model"}
+NN = {"MLP":MLP, "ALEX":ALEX, "VGG3":VGG3, "VGG7":VGG7, "VGG16":VGG16}
+NN_POOL = {"MLP":MLP_POOL, "ALEX":ALEX_POOL, "VGG3":VGG3_POOL, "VGG7":VGG7_POOL, "VGG16":VGG16_POOL}
+NN_PATH = {"MLP":"MLP_model", "ALEX":"CNN_model", "VGG3":"CNN_model", "VGG7":"CNN_model", "VGG16":"CNN_model"}
 
 
 def define_parser():
