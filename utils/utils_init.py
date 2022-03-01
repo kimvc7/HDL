@@ -3,15 +3,16 @@ import utils_model
 from datetime import datetime
 
 
-VGG16 = ((3, 3, 64), (3, 3, 64), (3, 3, 128), (3, 3, 128), (3, 3, 256), (3, 3, 256), (3, 3, 256),
+VGG16 = ((3, 3, 64), (3, 3, 64), (3, 3, 128), (3, 3, 128), (3, 3, 256), (3, 3, 256), #(3, 3, 256),
 		(3, 3, 512), (3, 3, 512), (3, 3, 512), (3, 3, 512), (3, 3, 512), (3, 3, 512), (4096,), (4096,), (1000,))
-VGG16_POOL = (False, True, False, True, False, False, True, False, False, True, False, False, True, False, False, False)
+VGG16_POOL = (False, True, False, True, False, True, False, False, True, False, False, True, False, False, False)
 
-
-ALEX =((5, 5, 32), (5, 5, 64), (1024,))
+#ALexNet architecture
+ALEX = ((5, 5, 32), (5, 5, 64), (1024,))
 ALEX_POOL = (True, True, False)
 
-VGG3 =((3, 3, 64), (3, 3, 64), (1000,))
+#VGG3 architecture
+VGG3 = ((3, 3, 64), (3, 3, 64), (1000,))
 VGG3_POOL = (True, True, False)
 
 MLP = (256, 128)
