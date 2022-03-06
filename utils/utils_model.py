@@ -12,11 +12,11 @@ import utils_init
 
 def get_loss(model, args):
     loss = model.xent + model.regularizer
-    if args.rho and not args.is_stable:
+    if args.rho > 0 and not args.is_stable:
         loss = model.robust_xent
 
     elif args.is_stable:
-        if args.rho:
+        if args.rho > 0:
             loss = model.robust_stable_xent
         else:
             loss = model.stable_xent
