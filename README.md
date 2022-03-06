@@ -40,7 +40,7 @@ The folder ```utils``` contains:
 
 You can modify parameters in the config file with the desired values.
 
-The documentation is in progress and will be updated soon.
+The documentation is in progress and will be updated regularly.
 
 
 
