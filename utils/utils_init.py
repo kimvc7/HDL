@@ -41,7 +41,7 @@ def define_parser():
 
 	parser.add_argument("--dropout", type=float, default=1, help="dropout rate, 1 is no dropout, 0 is all set to 0")
 
-	parser.add_argument("--rho", "-r", type=float, default=0, help="Radius of the uncertainty set for robust training.")
+	parser.add_argument("--rho", type=float, default=0, help="Radius of the uncertainty set for robust training.")
 
 	parser.add_argument("--robust_test", "-rtest", type=float,  nargs='+', default=[1e-5, 1e-4, 1e-3, 1e-2, 1e-1], help="radius of the uncertainty set for robust testing.")
 
@@ -58,6 +58,8 @@ def define_parser():
 	parser.add_argument("--lr", type=float, default=0.0001, help="learning Rate used for the optimizer")
 
 	parser.add_argument("--val_size", type=float, default=0.20, help="percentage of data used for validation")
+
+	parser.add_argument("--exp_id", type=int, default=0, help="experiment id corresponding to a predefined config of parameter, decided for the paper's experiments")
 
 	return parser
 
@@ -114,9 +116,50 @@ def read_data_args(args):
 
 	return data_set, train_size, val_size
 
-def init_experiements(config, args, num_classes, num_features, data):
+def init_experiments(config, args, num_classes, num_features, data):
 	num_experiments = config['num_experiments']
 	dict_exp = utils_model.create_dict(args, num_classes, num_features, data.train.images.shape, data.test.images.shape)
 	output_dir = 'outputs/logs/' + str(args.data_set) + '/' + str(datetime.now())
 	return num_experiments, dict_exp, output_dir
+
+def read_train_args_hypertuning(args):
+	param_combos = produce_configs()
+	if args.exp_id >= 0:
+		gen_param = param_combos[args.exp_id]
+		args.batch_range = [gen_param[0]]
+		args.lr = gen_param[1]
+		args.l2 = gen_param[2]
+		args.dropout = gen_param[3]
+		args.is_stable = gen_param[4]
+		args.l0 = gen_param[5]
+		#args.r = gen_param[6]
+		args.rho = gen_param[6]
+
+	rho = args.rho
+	is_stable = args.is_stable
+	learning_rate = args.lr
+	l0 = args.l0
+	l2 = args.l2
+	batch_range = args.batch_range
+	stab_ratio_range = args.stab_ratio_range
+	dropout = args.dropout
+	network_size = list(NN[args.network_type])
+	pool_size = list(NN_POOL[args.network_type])
+	model_path = NN_PATH[args.network_type]
+
+	print(args)
+	return args, rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, model_path
+
+def produce_configs():
+	gen_param = []
+	for batchsize in [32, 64]:
+		for lr in [5e-4, 1e-4]:
+			for l2 in [0, 5e-5, 5e-4]:
+				for drop_out in [1]:
+					for stable in [0,1]:
+						for l0 in [1e-4, 1e-5, 1e-6]:
+							for r in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
+								gen_param.append((batchsize, lr, l2, drop_out, stable, l0, r))
+	return gen_param
+
 

@@ -36,7 +36,7 @@ args = parser.parse_args()
 
 # Set up training parameters
 seed, max_train_steps, num_output_steps, num_summary_steps, num_check_steps = read_config_train(config)
-rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, network_path = read_train_args(args)
+args, rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, network_path = read_train_args_hypertuning(args)
 data_set, train_size, val_size = read_data_args(args)
 data_shape_size = 4
 
@@ -90,7 +90,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 
 	# Set up experiments
 	total_test_acc = 0
-	num_experiments, dict_exp, output_dir = init_experiements(config, args, num_classes, num_features, data) 
+	num_experiments, dict_exp, output_dir = init_experiments(config, args, num_classes, num_features, data)
 
 	if not os.path.exists(output_dir):
 		os.makedirs(output_dir)
