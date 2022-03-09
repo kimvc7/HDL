@@ -68,7 +68,7 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
         dict_exp[b_vars[i]][experiment] = sess.run(getattr(model, b_vars[i]))
         dict_exp[sparse_vars[i]][experiment] = sess.run(getattr(model, sparse_vars[i]))
 
-
+        ###TODO Check the formula for computing the sparsification
         if args.l0 > 0:
             W_masked =  sess.run(getattr(model, mask_names[i]))
             dict_exp[w_vars[i] + '_nonzero'][experiment] = sum( W_masked.reshape(-1)  >0)/ W_masked.reshape(-1).shape[0] 
