@@ -153,7 +153,7 @@ def read_train_args_hypertuning(args):
 def produce_configs():
 	gen_param = []
 	for batchsize in [256]:
-		for lr in [1e-5, 1e-4, 1e-3, 1e-2]:
+		for lr in [1e-4, 1e-3, 1e-2]:
 			for l2 in [0]:
 				for drop_out in [1]:
 					for stable in [0,1]:
