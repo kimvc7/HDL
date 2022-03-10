@@ -43,6 +43,7 @@ class _DataSet(object):
       # Convert from [0, 255] -> [0.0, 1.0].
       images = images.astype(np.float32)
       images = np.multiply(images, 1.0 / 255.0)
+      print(images)
 
     self._num_examples = images.shape[0]
     self._images = images
@@ -115,6 +116,8 @@ class _DataSet(object):
 def load_data_set(training_size, validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32):
   if data_set == "cifar10":
     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
+    X_train = X_train.astype('float32')
+    X_test = X_test.astype('float32')
     num_features = X_train.shape[1] * X_train.shape[2] * X_train.shape[3]
   if data_set == "fashion_mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
