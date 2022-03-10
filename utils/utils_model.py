@@ -79,6 +79,10 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
             W = sess.run(getattr(model, w_vars[i]))
             dict_exp[w_vars[i]][experiment] = W
             dict_exp[w_vars[i] + '_nonzero'][experiment] = sum(W.reshape(-1) > 0) / W.reshape(-1).shape[0]
+            dict_exp[w_vars[i] + '_killed_neurons'][experiment] = sum(
+                np.sum(W.reshape(-1, W.shape[-1]), axis=0) == 0)
+            dict_exp[w_vars[i] + '_killed_input_features'][experiment] = sum(
+                np.sum(W.reshape(-1, W.shape[-1]), axis=1) == 0)
 
 
     dict_exp['logits_acc'][experiment] = sess.run(model.logits, feed_dict=test_dict)

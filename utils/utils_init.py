@@ -154,10 +154,10 @@ def produce_configs():
 	gen_param = []
 	for batchsize in [256]:
 		for lr in [1e-4, 1e-3, 1e-2]:
-			for l2 in [0]:
-				for drop_out in [1]:
-					for stable in [0,1]:
-						for l0 in [0, 1e-4, 1e-5, 1e-6]:
+			for l0 in [0, 1e-6, 1e-5, 1e-4]:
+				for l2 in [0]:
+					for drop_out in [1]:
+						for stable in [0,1]:
 							for r in [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
 								gen_param.append((batchsize, lr, l2, drop_out, stable, l0, r))
 	return gen_param
