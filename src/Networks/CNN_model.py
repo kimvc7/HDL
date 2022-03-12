@@ -102,8 +102,12 @@ class Model(object):
 				hidden_layer = tf.nn.relu(self._operation(getattr(self, previous_layer), getattr(self, mask_names[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l]))
 				setattr(self, layer_names[l+1], hidden_layer) 
 			else:
-				hidden_layer = tf.nn.relu(self._operation(getattr(self, previous_layer), getattr(self, w_vars[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l]))
-				setattr(self, layer_names[l+1], hidden_layer) 
+				if l < len(w_vars) -1:
+					hidden_layer = tf.nn.relu(self._operation(getattr(self, previous_layer), getattr(self, w_vars[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l]))
+					setattr(self, layer_names[l+1], hidden_layer) 
+				else:
+					hidden_layer = self._operation(getattr(self, previous_layer), getattr(self, w_vars[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l])
+					setattr(self, layer_names[l+1], hidden_layer) 
 			
 			previous_layer = layer_names[l+1]
 
