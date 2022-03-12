@@ -53,11 +53,11 @@ def define_parser():
 
 	parser.add_argument("--data_set", type=str, default="mnist", help="dataset name")
 
-	parser.add_argument("--train_size", type=float, default=0.80, help="percentage of data used of training")
+	parser.add_argument("--train_size", type=float, default=1, help="percentage of data used of training")
 
 	parser.add_argument("--lr", type=float, default=0.0001, help="learning Rate used for the optimizer")
 
-	parser.add_argument("--val_size", type=float, default=0.20, help="percentage of data used for validation")
+	parser.add_argument("--val_size", type=float, default=(1/6), help="percentage of data used for validation")
 
 	parser.add_argument("--exp_id", type=int, default=0, help="experiment id corresponding to a predefined config of parameter, decided for the paper's experiments")
 
