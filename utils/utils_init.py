@@ -57,7 +57,7 @@ def define_parser():
 
 	parser.add_argument("--lr", type=float, default=0.0001, help="learning Rate used for the optimizer")
 
-	parser.add_argument("--val_size", type=float, default=(1/6), help="percentage of data used for validation")
+	parser.add_argument("--val_size", type=float, default=(1/5), help="percentage of data used for validation")
 
 	parser.add_argument("--exp_id", type=int, default=0, help="experiment id corresponding to a predefined config of parameter, decided for the paper's experiments")
 
@@ -152,13 +152,13 @@ def read_train_args_hypertuning(args):
 
 def produce_configs():
 	gen_param = []
-	for batchsize in [64,256]:
-		for lr in [1e-4, 1e-3, 1e-2]:
-			for l0 in [0]:#, 1e-6, 1e-5, 1e-4]:
-				for l2 in [0, 1e-5, 1e-4, 1e-3]:
+	for batchsize in [256]:
+		for lr in [1e-4, 1e-3]:
+			for l0 in [0, 1e-6, 1e-5, 1e-4]:
+				for l2 in [0]:#, 1e-5, 1e-4, 1e-3]:
 					for drop_out in [1]:
 						for stable in [0,1]:
-							for r in [0]:#, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
+							for r in [0, 1e-5, 1e-4, 1e-3, 1e-2]:
 								gen_param.append((batchsize, lr, l2, drop_out, stable, l0, r))
 	return gen_param
 
