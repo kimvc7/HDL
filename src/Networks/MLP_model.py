@@ -59,8 +59,15 @@ class Model(object):
         hidden_layer = tf.nn.relu(tf.matmul(getattr(self, layer_names[l]), getattr(self, mask_names[l])) + getattr(self, b_vars[l]))
         setattr(self, layer_names[l+1], hidden_layer) 
       else:
-        hidden_layer = tf.nn.relu(tf.matmul(getattr(self, layer_names[l]), getattr(self, w_vars[l])) + getattr(self, b_vars[l]))
+        
+        if l < len(w_vars) -1:
+					hidden_layer = tf.nn.relu(tf.matmul(getattr(self, layer_names[l]), getattr(self, w_vars[l])) + getattr(self, b_vars[l]))
         setattr(self, layer_names[l+1], hidden_layer) 
+				else:
+					hidden_layer = tf.matmul(getattr(self, layer_names[l]), getattr(self, w_vars[l])) + getattr(self, b_vars[l])
+        setattr(self, layer_names[l+1], hidden_layer) 
+          
+     
       if l < len(network_size):
         setattr(self, layer_names[l+1], tf.nn.dropout(getattr(self,  layer_names[l+1]), self.dropout)) 
 
