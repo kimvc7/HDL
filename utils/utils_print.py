@@ -59,6 +59,8 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
           tf.Summary.Value(tag='Train Stable Xent', simple_value= stable_xent),
           tf.Summary.Value(tag='Train Robust Stable Xent', simple_value= robust_stable_xent),
           tf.Summary.Value(tag='Test Acc', simple_value= test_acc)])
+    
+    summary_writer.add_summary(summary, global_step.eval(sess))
 
     for i in range(len(w_vars)):
         if args.l0 > 0:
@@ -68,6 +70,7 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
                 tf.Summary.Value(tag=w_vars[i] + '_nonzero', simple_value=dict_exp[w_vars[i] + '_nonzero'][experiment])])
 
             summary_writer.add_summary(summary_sparse, global_step.eval(sess))
+    
 
 
 def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters):
