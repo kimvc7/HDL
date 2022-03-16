@@ -99,8 +99,12 @@ class Model(object):
 				W_masked, W_norm = self.get_l0_norm_full(getattr(self, w_vars[l]), getattr(self, sparse_vars[l]))
 				setattr(self, mask_names[l], W_masked)
 				setattr(self, norm_names[l], W_norm)
-				hidden_layer = tf.nn.relu(self._operation(getattr(self, previous_layer), getattr(self, mask_names[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l]))
-				setattr(self, layer_names[l+1], hidden_layer) 
+				if l < len(w_vars) -1:
+					hidden_layer = tf.nn.relu(self._operation(getattr(self, previous_layer), getattr(self, mask_names[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l]))
+					setattr(self, layer_names[l+1], hidden_layer) 
+				else:
+					hidden_layer = self._operation(getattr(self, previous_layer), getattr(self, mask_names[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l])
+					setattr(self, layer_names[l+1], hidden_layer) 
 			else:
 				if l < len(w_vars) -1:
 					hidden_layer = tf.nn.relu(self._operation(getattr(self, previous_layer), getattr(self, w_vars[l]), len(layer_sizes[l+1])) + getattr(self, b_vars[l]))
