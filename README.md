@@ -34,7 +34,7 @@ The folder ```src``` contains:
 The folder ```utils``` contains:
 - ```utils_print.py```: contains the printing functions.
 - ```utils_model.py```: contains the loss functions and model dictionaries.
-- ```utils_init.py```: contains function to load the different arguments.
+- ```utils_init.py```: contains function to load the different arguments and launch a grid search.
 - ```utils_MLP_model.py```: contains initialization function for MLP models. Needs to be adapted for CNNs.
 - ```utils.py```: contains miscellaneous elements.
 
