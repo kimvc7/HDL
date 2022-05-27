@@ -43,7 +43,7 @@ class _DataSet(object):
       # Convert from [0, 255] -> [0.0, 1.0].
       images = images.astype(np.float32)
       images = np.multiply(images, 1.0 / 255.0)
-      print(images)
+      #print(images)
 
     self._num_examples = images.shape[0]
     self._images = images
@@ -161,8 +161,8 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
     print("Training data shape:", X_train.shape)
     print("Training data Std:", np.std(X_train, axis=0))
     print("Training data Mean:", np.mean(X_train, axis=0))
-  print("There are", X_train.shape[0], "samples in the training set.")
-  print("There are", X_val.shape[0], "samples in the validation set.")
+  # print("There are", X_train.shape[0], "samples in the training set.")
+  # print("There are", X_val.shape[0], "samples in the validation set.")
 
   options = dict(dtype=dtype, reshape=reshape, num_features=num_features, seed=seed)
 

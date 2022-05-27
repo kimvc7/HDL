@@ -59,19 +59,22 @@ def define_parser():
 
 	parser.add_argument("--val_size", type=float, default=(1/5), help="percentage of data used for validation")
 
-	parser.add_argument("--exp_id", type=int, default=0, help="experiment id corresponding to a predefined config of parameter, decided for the paper's experiments")
+	parser.add_argument("--exp_id", type=int, default=-1, help="experiment id corresponding to a predefined config of parameter, decided for the paper's experiments")
 
 	return parser
 
 
 def read_config_train(config):
 	seed = config['random_seed']
-	max_train_steps = config['max_num_training_steps']
+	num_epochs = config['num_epochs']
 	num_output_steps = config['num_output_steps']
 	num_summ_steps = config['num_summary_steps']
 	num_check_steps = config['num_checkpoint_steps']
+	final_temp = config['final_temp']
+	num_rounds = config['num_rounds']
+	rewind_epoch = config['rewind_epoch']
 
-	return seed, max_train_steps, num_output_steps, num_summ_steps, num_check_steps
+	return seed, num_epochs, num_output_steps, num_summ_steps, num_check_steps, final_temp, num_rounds, rewind_epoch
 
 
 def init_vars(n):

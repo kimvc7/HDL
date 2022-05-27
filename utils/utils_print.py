@@ -11,9 +11,10 @@ with open('config.json') as config_file:
     config = json.load(config_file)
 
 
-def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, dict_exp, experiment, global_step):
+def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_writer, experiment, global_step):
     network_size = list(utils_init.NN[args.network_type])
     w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
+    mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
 
 
     nat_acc = sess.run(model.accuracy, feed_dict=nat_dict)
@@ -40,12 +41,17 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
         if args.is_stable:
             print('    Robust Stable Xent {:.4}'.format(robust_stable_xent))
 
-    for i in range(len(w_vars)):
-        if args.l0 > 0:
-            print('    Killed neurons - ' + w_vars[i], dict_exp[w_vars[i] + '_killed_neurons'][experiment])
-            print('    Killed input neurons - ' + w_vars[i], dict_exp[w_vars[i] + '_killed_input_features'][experiment])
 
-        print('    Non zero features percentage - ' + w_vars[i] , dict_exp[w_vars[i] + '_nonzero'][experiment])
+
+    for i in range(len(w_vars)):
+        
+
+        if args.l0 > 0:
+            W_masked =  sess.run(getattr(model, mask_names[i]), feed_dict= nat_dict)
+            print(' #   Killed neurons - ' + w_vars[i], sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=0) == 0))
+            print(' #   Killed input neurons - ' + w_vars[i], sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=1) == 0))
+            print('    Non zero features percentage - ' + w_vars[i] , 100*(sum( W_masked.reshape(-1) != 0)/ W_masked.reshape(-1).shape[0]), "%")
+        
 
     regularizer = sess.run(model.regularizer, feed_dict=nat_dict)
     print('    Regularizer', regularizer)
@@ -64,22 +70,18 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
 
     for i in range(len(w_vars)):
         if args.l0 > 0:
+            W_masked =  sess.run(getattr(model, mask_names[i]), feed_dict= nat_dict)
             summary_sparse = tf.Summary(value=[
-                tf.Summary.Value(tag=w_vars[i] + '_killed_neurons', simple_value=dict_exp[w_vars[i] + '_killed_neurons'][experiment]),
-                tf.Summary.Value(tag=w_vars[i] + '_killed_inputs', simple_value=dict_exp[w_vars[i] + '_killed_input_features'][experiment]),
-                tf.Summary.Value(tag=w_vars[i] + '_nonzero', simple_value=dict_exp[w_vars[i] + '_nonzero'][experiment])])
+                tf.Summary.Value(tag=w_vars[i] + '_killed_neurons', simple_value=sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=0) == 0)),
+                tf.Summary.Value(tag=w_vars[i] + '_killed_inputs', simple_value=sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=1) == 0)),
+                tf.Summary.Value(tag=w_vars[i] + '_nonzero', simple_value=sum( W_masked.reshape(-1)  != 0)/ W_masked.reshape(-1).shape[0])])
 
             summary_writer.add_summary(summary_sparse, global_step.eval(sess))
     
 
 
-def update_dict_output(dict_exp, experiment, sess, test_acc, model, test_dict, num_iters):
-    dict_exp['test_accs'][experiment] = test_acc*100
-    dict_exp['iterations'][experiment] = num_iters
 
-    return dict_exp
-
-def update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp):
+def update_best_acc(args, best_model, x_test, y_test, experiment, dict_exp):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         clip = True
@@ -90,31 +92,37 @@ def update_adv_acc(args, best_model, x_test, y_test, experiment, dict_exp):
             attack = LinfPGDAttack(best_model, rho_test, config['k'], config['a'], 
             config['random_start'], config['loss_func'], clip)
             x_test_adv = attack.perturb(x_test, y_test, sess)
-            adv_dict = {best_model.x_input: x_test_adv, best_model.y_input: y_test}
+            adv_dict = {best_model.x_input: x_test_adv, best_model.y_input: y_test, best_model.temp: 1}
             dict_exp['adv_test_accs'][rho_test][experiment] = sess.run(best_model.accuracy, feed_dict=adv_dict)
 
+        test_dict = {best_model.x_input: x_test, best_model.y_input: y_test, best_model.temp: 1}
+        test_acc = sess.run(best_model.accuracy, feed_dict=test_dict)
+        dict_exp['test_acc'][experiment] = test_acc*100
 
-def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, tot_test_acc, max_train_steps, network_path):
+    return dict_exp
+
+
+def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, max_train_steps, network_path):
     network_size = list(utils_init.NN[args.network_type])
     w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
     
-    avg_test_acc = tot_test_acc / num_experiments
-    std = np.array([float(k) for k in dict_exp['test_accs']]).std()
+    avg_test_acc = np.array([float(k) for k in dict_exp['test_acc']]).mean()
+    std = np.array([float(k) for k in dict_exp['test_acc']]).std()
     logit_stability = np.mean(np.std(dict_exp['logits_acc'], axis=0), axis=0)
     gini_stability = total_gini(dict_exp['preds'].transpose())
 
 
     print('  Average testing accuracy {:.4}'.format(avg_test_acc * 100))
-    print('  Individual accuracies: \n', dict_exp['test_accs'])
+    print('  Individual accuracies: \n', dict_exp['test_acc'])
     print('  Adv testing accuracies', dict_exp['adv_test_accs'])
     print('  Stability values', dict_exp[stable_var])
-    print('  Test Accuracy std {:.2}'.format(np.array([float(k) for k in dict_exp['test_accs']]).std()))
+    print('  Test Accuracy std {:.2}'.format(std))
     print("  Logits std", np.mean(np.mean(np.std(dict_exp['logits_acc'], axis=0), axis=0)))
     print("  Gini stability", gini_stability)
 
 
     weights_stability = print_layer_stability(dict_exp, num_experiments, args)
-    weights_nonzero = [np.mean(dict_exp[w_vars[i]]) for i in range(len(w_vars))]
+    weights_nonzero = [np.mean(dict_exp[w_vars[i]+ '_nonzero']) for i in range(len(w_vars))]
 
     for i in range(len(w_vars)):
         print(w_vars[i] + ' non zero percentage', weights_nonzero[i])
@@ -131,6 +139,7 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         headers = []
         headers += ['num_experiments', 'batch_size', 'subset_ratio', 'max_train_steps']
         headers += ['test accuracy '+ str(i) for i in range(num_experiments)]
+        headers += ['# Iterations '+ str(i) for i in range(num_experiments)]
 
         for key in dict_exp:
             if key not in w_vars+ b_vars+ [stable_var]+ sparse_vars + ['adv_test_accs', 'preds']:
@@ -138,9 +147,8 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
 
         headers += ['Avg test adversarial acc for rho = '+ str(rho) for rho in  args.robust_test]
         headers += ['is_stable', 'rho', 'train_size', 'l2', 'l0', 'network_size', 'learning rate']
-        headers += [w_vars[i] + ' Nonzero weights' for i in range(len(w_vars))]
         headers += [w_vars[i] + ' Stability' for i in range(len(w_vars))]
-        headers += ['std', 'logit_stability', 'gini_stability' ] 
+        headers += ['test_acc_std', 'logit_stability', 'gini_stability' ] 
         writer.writerow(headers)
 
     with file:
@@ -148,7 +156,8 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         cols = []
 
         cols += [num_experiments, batch_size, subset_ratio, max_train_steps]
-        cols += [dict_exp['test_accs'][i] for i in range(num_experiments)]
+        cols += [dict_exp['test_acc'][i] for i in range(num_experiments)]
+        cols += [dict_exp['iterations'][i] for i in range(num_experiments)]
         
         for key in dict_exp:
             if key not in w_vars+ b_vars+ [stable_var]+ sparse_vars + ['adv_test_accs', 'preds']:
@@ -156,16 +165,10 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
 
         cols += [np.mean(dict_exp['adv_test_accs'][rho]) for rho in args.robust_test]
         cols += [args.is_stable, args.rho,  args.train_size, args.l2, args.l0, network_size, args.lr]
-        cols += weights_nonzero
         cols += weights_stability
         cols += [std, logit_stability, gini_stability ] 
 
         print(cols)
-
-
-
-
-
         writer.writerow(cols)
 
 

@@ -44,14 +44,14 @@ def create_dict(args, num_classes, num_features, train_shape, test_size):
 
     dict_exp[stable_var] = np.zeros(config['num_experiments'])
     dict_exp['preds'] = np.zeros((config['num_experiments'], test_size[0]))
-    dict_exp['test_accs'] = np.zeros(config['num_experiments'])
+    dict_exp['test_acc'] = np.zeros(config['num_experiments'])
     dict_exp['iterations'] = np.zeros(config['num_experiments'])
     dict_exp['adv_test_accs'] = {eps_test: np.zeros(config['num_experiments']) for eps_test in args.robust_test}
 
     return dict_exp
 
 
-def update_dict(dict_exp, args, sess, model, test_dict, experiment):
+def update_dict(dict_exp, args, sess, model, test_dict, experiment, iteration):
     network_size = list(utils_init.NN[args.network_type])
     w_vars, b_vars, stable_var, sparse_vars = utils_init.init_vars(len(network_size)+1)
     mask_names = [w_vars[l] + str("_masked") for l in range(len(w_vars))]
@@ -60,25 +60,26 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
 
     for i in range(len(w_vars)):
         if dict_exp[b_vars[i]] is None:
-            dict_exp[b_vars[i]]  = np.array([sess.run(getattr(model, b_vars[i]))]*config['num_experiments'])
-            dict_exp[sparse_vars[i]]  = np.array([sess.run(getattr(model, sparse_vars[i]))]*config['num_experiments'])
-            dict_exp[w_vars[i]] = np.array([sess.run(getattr(model, w_vars[i]))]*config['num_experiments'])
+            dict_exp[b_vars[i]]  = np.array([sess.run(getattr(model, b_vars[i]), feed_dict= test_dict)]*config['num_experiments'])
+            dict_exp[sparse_vars[i]]  = np.array([sess.run(getattr(model, sparse_vars[i]), feed_dict= test_dict)]*config['num_experiments'])
+            dict_exp[w_vars[i]] = np.array([sess.run(getattr(model, w_vars[i]), feed_dict= test_dict)]*config['num_experiments'])
 
 
-        dict_exp[b_vars[i]][experiment] = sess.run(getattr(model, b_vars[i]))
-        dict_exp[sparse_vars[i]][experiment] = sess.run(getattr(model, sparse_vars[i]))
+        dict_exp[b_vars[i]][experiment] = sess.run(getattr(model, b_vars[i]), feed_dict= test_dict)
+        dict_exp[sparse_vars[i]][experiment] = sess.run(getattr(model, sparse_vars[i]), feed_dict= test_dict)
+
+        W = sess.run(getattr(model, w_vars[i]), feed_dict= test_dict)
+        dict_exp[w_vars[i]][experiment] = W
+
 
         ###TODO Check the formula for computing the sparsification
         if args.l0 > 0:
-            W_masked =  sess.run(getattr(model, mask_names[i]))
-            dict_exp[w_vars[i] + '_nonzero'][experiment] = sum( W_masked.reshape(-1)  >0)/ W_masked.reshape(-1).shape[0] 
+            W_masked =  sess.run(getattr(model, mask_names[i]), feed_dict= test_dict)
+            dict_exp[w_vars[i] + '_nonzero'][experiment] = sum( W_masked.reshape(-1) != 0)/ W_masked.reshape(-1).shape[0] 
             dict_exp[w_vars[i] + '_killed_neurons'][experiment] = sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=0) == 0)
             dict_exp[w_vars[i] + '_killed_input_features'][experiment] =  sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=1) == 0)
-            dict_exp[w_vars[i]][experiment] = W_masked
         else:
-            W = sess.run(getattr(model, w_vars[i]))
-            dict_exp[w_vars[i]][experiment] = W
-            dict_exp[w_vars[i] + '_nonzero'][experiment] = sum(W.reshape(-1) > 0) / W.reshape(-1).shape[0]
+            dict_exp[w_vars[i] + '_nonzero'][experiment] = sum(W.reshape(-1) != 0) / W.reshape(-1).shape[0]
             dict_exp[w_vars[i] + '_killed_neurons'][experiment] = sum(
                 np.sum(W.reshape(-1, W.shape[-1]), axis=0) == 0)
             dict_exp[w_vars[i] + '_killed_input_features'][experiment] = sum(
@@ -87,6 +88,7 @@ def update_dict(dict_exp, args, sess, model, test_dict, experiment):
 
     dict_exp['logits_acc'][experiment] = sess.run(model.logits, feed_dict=test_dict)
     dict_exp['preds'][experiment] = sess.run(model.y_pred, feed_dict=test_dict)
+    dict_exp['iterations'][experiment] = iteration
 
 
     return dict_exp
@@ -110,8 +112,8 @@ def get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_r
     stored_weights['stability_variable'] = stab_weight
     stored_weights['sparsity_variables'] = sparse_weights
 
-
-    best_model = network_module.Model(num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.rho , data_shape, stored_weights)
+    ticket = True
+    best_model = network_module.Model(num_classes, batch_size, network_size, pool_size, subset_ratio, num_features, args.dropout, args.l2, args.l0, args.rho , data_shape, ticket, stored_weights)
     return best_model
     
 
