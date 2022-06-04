@@ -74,7 +74,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 	num_classes = np.unique(data.train.labels).shape[0]
 
 	# Find number of training steps and temeprature increase factor.
-	iters_per_epoch =  data.train.images.shape[0]/batch_size
+	iters_per_epoch =  int(data.train.images.shape[0]/batch_size)
 	max_train_steps = int(iters_per_epoch * num_epochs)
 	temp_increase = final_temp**(1./(num_epochs-1))
 	print("Training size is: ", data.train.images.shape[0])
