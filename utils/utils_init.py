@@ -159,7 +159,7 @@ def produce_configs():
 	:return: Creates all the configurations for hyperparameter tuning
 	"""
 	gen_param = []
-	for batchsize in [256]:
+	for batchsize in [64]:
 		for lr in [1e-4, 1e-3]:
 			for l0 in [1e-7, 1e-8]:#, 1e-6, 1e-5, 1e-4]:
 				for l2 in [0]:#, 1e-5, 1e-4, 1e-3]:
