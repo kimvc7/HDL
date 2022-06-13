@@ -16,6 +16,7 @@ from timeit import default_timer as timer
 import numpy as np
 import input_data
 import itertools
+import pickle
 from utils_init import *
 import utils_model
 from utils_nn_model import *
@@ -206,6 +207,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 
 					if (round_ != num_rounds - 1) and (train_step == max_train_steps -1):
 						prune = (round_ != num_rounds - 2)
+						# see utils_models for this function
 						stored_weights = store_network(model, args, sess, nat_dict, prune)
 
 		
@@ -215,5 +217,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 		best_model = utils_model.get_best_model(dict_exp, experiment, args, num_classes, batch_size, subset_ratio, num_features, spec, network_module, network_size, pool_size, data_shape)
 		dict_exp = utils_print.update_best_acc(args, best_model, x_test, y_test, experiment, dict_exp)
 
+		# Save weights to a pickle file
+		with open('saved_weights.pkl', 'wb') as f:
+			pickle.dump(stored_weights, f)
 
 	utils_print.print_stability_measures(dict_exp, args, num_experiments, batch_size, subset_ratio, max_train_steps, network_path)
