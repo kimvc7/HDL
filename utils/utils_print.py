@@ -139,6 +139,8 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         headers = []
         headers += ['num_experiments', 'batch_size', 'subset_ratio', 'max_train_steps']
         headers += ['test accuracy '+ str(i) for i in range(num_experiments)]
+        for rho in args.robust_test:
+            headers += ['adv_test_acc_rho='+str(rho)+ "_exp="+ str(i) for i in range(num_experiments)]
         headers += ['# Iterations '+ str(i) for i in range(num_experiments)]
 
         for key in dict_exp:
@@ -157,6 +159,8 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
 
         cols += [num_experiments, batch_size, subset_ratio, max_train_steps]
         cols += [dict_exp['test_acc'][i] for i in range(num_experiments)]
+        for rho in args.robust_test:
+            cols += [dict_exp['adv_test_accs'][rho][i] for i in range(num_experiments)]
         cols += [dict_exp['iterations'][i] for i in range(num_experiments)]
         
         for key in dict_exp:

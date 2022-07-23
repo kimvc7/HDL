@@ -135,7 +135,6 @@ def read_train_args_hypertuning(args):
 		args.dropout = gen_param[3]
 		args.is_stable = gen_param[4]
 		args.l0 = gen_param[5]
-		#args.r = gen_param[6]
 		args.rho = gen_param[6]
 		args.stab_ratio_range = gen_param[7]
 
@@ -161,13 +160,13 @@ def produce_configs():
 	gen_param = []
 	for batchsize in [64]:
 		for lr in [1e-4, 1e-3]:
-			for l0 in [1e-7, 1e-8]:#, 1e-6, 1e-5, 1e-4]:
-				for l2 in [0]:#, 1e-5, 1e-4, 1e-3]:
+			for l0 in [1e-7, 1e-8, 1e-9, 1e-10, 0]:
+				for l2 in [0]:
 					for drop_out in [1]:
 						for stable in [0,1]:
-							for r in [0, 1e-5, 1e-4, 1e-3, 1e-2]:
-								for stab_ratio in [[0.9], [0.7], [0.6], [0.5]]:
-									gen_param.append((batchsize, lr, l2, drop_out, stable, l0, r, stab_ratio))
+							for rho in [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
+								for stab_ratio in [[0.95], [0.9], [0.8], [0.7]]:
+									gen_param.append((batchsize, lr, l2, drop_out, stable, l0, rho, stab_ratio))
 	return gen_param
 
 
