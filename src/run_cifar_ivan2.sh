@@ -9,7 +9,7 @@
 #SBATCH --time=1-23:30:00
 #SBATCH --mem-per-cpu=4G
 
-#SBATCH --array=200-399
+#SBATCH --array=200-359
 
 source /etc/profile ;
 module load anaconda/2021a
