@@ -165,7 +165,7 @@ def produce_configs():
 					for drop_out in [1]:
 						for stable in [0,1]:
 							for rho in [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
-								for stab_ratio in [[0.95], [0.9], [0.8], [0.7]]:
+								for stab_ratio in [[0.9], [0.8], [0.7]]:
 									gen_param.append((batchsize, lr, l2, drop_out, stable, l0, rho, stab_ratio))
 	return gen_param
 
