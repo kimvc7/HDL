@@ -58,25 +58,25 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
 
 
 
-    summary = tf.Summary(value=[
-          tf.Summary.Value(tag='Train Xent', simple_value= nat_xent),
-          tf.Summary.Value(tag='Val Acc', simple_value= val_acc),
-          tf.Summary.Value(tag='Train Acc', simple_value= nat_acc),
-          tf.Summary.Value(tag='Train Stable Xent', simple_value= stable_xent),
-          tf.Summary.Value(tag='Train Robust Stable Xent', simple_value= robust_stable_xent),
-          tf.Summary.Value(tag='Test Acc', simple_value= test_acc)])
+#     summary = tf.Summary(value=[
+#           tf.Summary.Value(tag='Train Xent', simple_value= nat_xent),
+#           tf.Summary.Value(tag='Val Acc', simple_value= val_acc),
+#           tf.Summary.Value(tag='Train Acc', simple_value= nat_acc),
+#           tf.Summary.Value(tag='Train Stable Xent', simple_value= stable_xent),
+#           tf.Summary.Value(tag='Train Robust Stable Xent', simple_value= robust_stable_xent),
+#           tf.Summary.Value(tag='Test Acc', simple_value= test_acc)])
     
-    summary_writer.add_summary(summary, global_step.eval(sess))
+#     summary_writer.add_summary(summary, global_step.eval(sess))
 
-    for i in range(len(w_vars)):
-        if args.l0 > 0:
-            W_masked =  sess.run(getattr(model, mask_names[i]), feed_dict= nat_dict)
-            summary_sparse = tf.Summary(value=[
-                tf.Summary.Value(tag=w_vars[i] + '_killed_neurons', simple_value=sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=0) == 0)),
-                tf.Summary.Value(tag=w_vars[i] + '_killed_inputs', simple_value=sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=1) == 0)),
-                tf.Summary.Value(tag=w_vars[i] + '_nonzero', simple_value=sum( W_masked.reshape(-1)  != 0)/ W_masked.reshape(-1).shape[0])])
+#     for i in range(len(w_vars)):
+#         if args.l0 > 0:
+#             W_masked =  sess.run(getattr(model, mask_names[i]), feed_dict= nat_dict)
+#             summary_sparse = tf.Summary(value=[
+#                 tf.Summary.Value(tag=w_vars[i] + '_killed_neurons', simple_value=sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=0) == 0)),
+#                 tf.Summary.Value(tag=w_vars[i] + '_killed_inputs', simple_value=sum(np.sum(W_masked.reshape(-1, W_masked.shape[-1]), axis=1) == 0)),
+#                 tf.Summary.Value(tag=w_vars[i] + '_nonzero', simple_value=sum( W_masked.reshape(-1)  != 0)/ W_masked.reshape(-1).shape[0])])
 
-            summary_writer.add_summary(summary_sparse, global_step.eval(sess))
+#             summary_writer.add_summary(summary_sparse, global_step.eval(sess))
     
 
 
