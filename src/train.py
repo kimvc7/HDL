@@ -179,7 +179,7 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
 
 						# Print and Save current status
 						utils_print.print_metrics(sess, model, nat_dict, val_dict, test_dict, train_step, args, summary_writer, experiment, global_step)
-						saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
+						#saver.save(sess, directory+ '/checkpoints/checkpoint', global_step=global_step)
 					  
 						# Track best validation accuracy
 						val_acc = sess.run(model.accuracy, feed_dict=val_dict)
