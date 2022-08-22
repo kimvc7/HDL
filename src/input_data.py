@@ -8,6 +8,54 @@ import numpy as np
 #import ssl
 #ssl._create_default_https_context = ssl._create_unverified_context
 
+UCI = ['ozone-level-detection-eight',
+ 'wall-following-robot-navigation-4',
+ 'wall-following-robot-navigation-24',
+ 'breast-cancer-wisconsin-original',
+ 'optical-recognition-handwritten-digits',
+ 'hepatitis',
+ 'hill-valley',
+ 'breast-cancer-wisconsin-prognostic',
+ 'libras-movement',
+ 'connectionist-bench',
+ 'qsar-biodegradation',
+ 'pen-based-recognition-handwritten-digits',
+ 'iris',
+ 'statlog-project-landsat-satellite',
+ 'skin-segmentation',
+ 'spambase',
+ 'ozone-level-detection-one',
+ 'echocardiogram',
+ 'wine',
+ 'breast-cancer-wisconsin-diagnostic',
+ 'wall-following-robot-navigation-2',
+ 'dermatology',
+ 'blood-transfusion-service-center',
+ 'hill-valley-noise',
+ 'haberman-survival',
+ 'balance-scale',
+ 'thyroid-disease-new-thyroid',
+ 'spectf-heart',
+ 'seeds',
+ 'thyroid-disease-ann-thyroid',
+ 'yeast',
+ 'glass-identification',
+ 'hayes-roth',
+ 'parkinsons',
+ 'letter-recognition',
+ 'climate-model-simulation-crashes',
+ 'banknote-authentication',
+ 'planning-relax',
+ 'ecoli',
+ 'connectionist-bench-sonar',
+ 'magic-gamma-telescope',
+ 'cnae-9',
+ 'ionosphere',
+ 'image-segmentation',
+ 'poker-hand',
+ 'arrhythmia']
+
+
 _Datasets = collections.namedtuple('_Datasets', ['train', 'validation', 'test'])
 
 class _DataSet(object):
@@ -128,11 +176,18 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
         X_train = X_train[:,:,:,np.newaxis]
         X_test = X_test[:,:,:,np.newaxis]
     num_features = X_train.shape[1]*X_train.shape[2]
-  if "uci" in data_set.lower():
-    uci_num = int(data_set[3:])
-    full_data = np.load("../UCI/data" + str(uci_num) + ".pickle", allow_pickle=True)
-    X_train, X_test, y_train, y_test = full_data['x_train'], full_data['x_test'], full_data['y_train'], full_data[
-      'y_test']
+    
+  else:
+    uci_num = UCI[int(data_set)]
+    print(uci_num)
+    X_train = np.genfromtxt("../UCI/imp_" + str(uci_num) + "_trainX.csv", delimiter=',')
+    X_test = np.genfromtxt("../UCI/imp_" + str(uci_num) + "_testX.csv", delimiter=',')
+    y_train = np.genfromtxt("../UCI/" + str(uci_num) + "_trainY.csv", delimiter=',')
+    y_test = np.genfromtxt("../UCI/" + str(uci_num) + "_testY.csv", delimiter=',')
+    print(np.unique(y_test))
+    if y_train.min() ==1:
+        y_train = y_train - 1
+        y_test = y_test - 1
     print("Training data shape:", X_train.shape)
     print("Training data Std:", np.std(X_train, axis=0))
     print("Training data Mean:", np.mean(X_train, axis=0))
