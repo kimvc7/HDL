@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -o output.sh.log-%j
-#SBATCH --error=error.sh.log-%j
+#SBATCH -o output.text
+#SBATCH --error=error.txt
 #SBATCH --nodes=1 
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:volta:1
@@ -14,4 +14,4 @@
 source /etc/profile ;
 module load anaconda/2021a
 
-python train.py --train_size 0.2 --data_set cifar10 --network_type ALEX --exp_id ${SLURM_ARRAY_TASK_ID}
+python train.py --train_size 1 --data_set 0 --network_type MLP --exp_id ${SLURM_ARRAY_TASK_ID}
