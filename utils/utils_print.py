@@ -81,7 +81,7 @@ def print_metrics(sess, model, nat_dict, val_dict, test_dict, ii, args, summary_
 
 
 
-def update_best_acc(args, best_model, x_test, y_test, experiment, dict_exp):
+def update_best_acc(args, best_model, x_test, y_test, x_val, y_val, experiment, dict_exp):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         clip = True
@@ -93,11 +93,17 @@ def update_best_acc(args, best_model, x_test, y_test, experiment, dict_exp):
             config['random_start'], config['loss_func'], clip)
             x_test_adv = attack.perturb(x_test, y_test, sess)
             adv_dict = {best_model.x_input: x_test_adv, best_model.y_input: y_test, best_model.temp: 1}
+            x_val_adv = attack.perturb(x_val, y_val, sess)
+            adv_val_dict = {best_model.x_input: x_val_adv, best_model.y_input: y_val, best_model.temp: 1}
             dict_exp['adv_test_accs'][rho_test][experiment] = sess.run(best_model.accuracy, feed_dict=adv_dict)
+            dict_exp['adv_val_accs'][rho_test][experiment] = sess.run(best_model.accuracy, feed_dict=adv_val_dict)
 
         test_dict = {best_model.x_input: x_test, best_model.y_input: y_test, best_model.temp: 1}
         test_acc = sess.run(best_model.accuracy, feed_dict=test_dict)
+        val_dict = {best_model.x_input: x_val, best_model.y_input: y_val, best_model.temp: 1}
+        val_acc = sess.run(best_model.accuracy, feed_dict=val_dict)
         dict_exp['test_acc'][experiment] = test_acc*100
+        dict_exp['val_acc'][experiment] = val_acc*100
 
     return dict_exp
 
@@ -139,15 +145,18 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
         headers = []
         headers += ['num_experiments', 'batch_size', 'subset_ratio', 'max_train_steps']
         headers += ['test accuracy '+ str(i) for i in range(num_experiments)]
+        headers += ['val accuracy '+ str(i) for i in range(num_experiments)]
         for rho in args.robust_test:
             headers += ['adv_test_acc_rho='+str(rho)+ "_exp="+ str(i) for i in range(num_experiments)]
+            headers += ['adv_val_acc_rho='+str(rho)+ "_exp="+ str(i) for i in range(num_experiments)]
         headers += ['# Iterations '+ str(i) for i in range(num_experiments)]
 
         for key in dict_exp:
-            if key not in w_vars+ b_vars+ [stable_var]+ sparse_vars + ['adv_test_accs', 'preds']:
+            if key not in w_vars+ b_vars+ [stable_var]+ sparse_vars + ['adv_test_accs', 'preds', 'adv_val_accs']:
                 headers +=  ['Avg '+str(key)]
 
         headers += ['Avg test adversarial acc for rho = '+ str(rho) for rho in  args.robust_test]
+        headers += ['Avg val adversarial acc for rho = '+ str(rho) for rho in  args.robust_test]
         headers += ['is_stable', 'rho', 'train_size', 'l2', 'l0', 'network_size', 'learning rate']
         headers += [w_vars[i] + ' Stability' for i in range(len(w_vars))]
         headers += ['test_acc_std', 'logit_stability', 'gini_stability' ] 
@@ -159,15 +168,18 @@ def print_stability_measures(dict_exp, args, num_experiments, batch_size, subset
 
         cols += [num_experiments, batch_size, subset_ratio, max_train_steps]
         cols += [dict_exp['test_acc'][i] for i in range(num_experiments)]
+        cols += [dict_exp['val_acc'][i] for i in range(num_experiments)]
         for rho in args.robust_test:
             cols += [dict_exp['adv_test_accs'][rho][i] for i in range(num_experiments)]
+            cols += [dict_exp['adv_val_accs'][rho][i] for i in range(num_experiments)]
         cols += [dict_exp['iterations'][i] for i in range(num_experiments)]
         
         for key in dict_exp:
-            if key not in w_vars+ b_vars+ [stable_var]+ sparse_vars + ['adv_test_accs', 'preds']:
+            if key not in w_vars+ b_vars+ [stable_var]+ sparse_vars + ['adv_test_accs', 'preds', 'adv_val_accs']:
                 cols += [np.mean(dict_exp[key])]
 
         cols += [np.mean(dict_exp['adv_test_accs'][rho]) for rho in args.robust_test]
+        cols += [np.mean(dict_exp['adv_val_accs'][rho]) for rho in args.robust_test]
         cols += [args.is_stable, args.rho,  args.train_size, args.l2, args.l0, network_size, args.lr]
         cols += weights_stability
         cols += [std, logit_stability, gini_stability ] 

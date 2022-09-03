@@ -3,6 +3,8 @@ import collections
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import random_seed
 import numpy as np
+from sklearn.model_selection import train_test_split
+
 
 #Uncomment to download MNIST/CIFAR/... if you have a bug
 #import ssl
@@ -193,32 +195,7 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
     print("Training data Mean:", np.mean(X_train, axis=0))
     num_features = X_train.shape[1]
 
-  #Permute data
-  np.random.seed(seed)
-  perm0 = np.arange(X_train.shape[0])
-  np.random.shuffle(perm0)
-  X = X_train[perm0]
-  Y = y_train[perm0]
-
-  n = int(X_train.shape[0]*training_size)
-  m = int(n*validation_size)
-  X_val = X[:m]
-  y_val = Y[:m]
-  X_train = X[m:n]
-  y_train = Y[m:n]
-
-  if "uci" in data_set.lower():
-    m = np.mean(X_train, axis = 0)
-    s = np.std(X_train, axis=0)
-    X_train = (X_train - m)/s
-    X_val = (X_val - m) / s
-    X_test = (X_test - m)/s
-    print("Training data shape:", X_train.shape)
-    print("Training data Std:", np.std(X_train, axis=0))
-    print("Training data Mean:", np.mean(X_train, axis=0))
-  # print("There are", X_train.shape[0], "samples in the training set.")
-  # print("There are", X_val.shape[0], "samples in the validation set.")
-
+  X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=validation_size, random_state=seed)
   options = dict(dtype=dtype, reshape=reshape, num_features=num_features, seed=seed)
 
   train = _DataSet(X_train, y_train, **options )

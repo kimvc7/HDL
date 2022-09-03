@@ -45,9 +45,10 @@ def create_dict(args, num_classes, num_features, train_shape, test_size):
     dict_exp[stable_var] = np.zeros(config['num_experiments'])
     dict_exp['preds'] = np.zeros((config['num_experiments'], test_size[0]))
     dict_exp['test_acc'] = np.zeros(config['num_experiments'])
+    dict_exp['val_acc'] = np.zeros(config['num_experiments'])
     dict_exp['iterations'] = np.zeros(config['num_experiments'])
     dict_exp['adv_test_accs'] = {eps_test: np.zeros(config['num_experiments']) for eps_test in args.robust_test}
-
+    dict_exp['adv_val_accs'] = {eps_test: np.zeros(config['num_experiments']) for eps_test in args.robust_test}
     return dict_exp
 
 
