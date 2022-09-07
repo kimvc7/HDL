@@ -4,7 +4,7 @@ from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import random_seed
 import numpy as np
 from sklearn.model_selection import train_test_split
-
+from sklearn import preprocessing
 
 #Uncomment to download MNIST/CIFAR/... if you have a bug
 #import ssl
@@ -182,20 +182,21 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
   else:
     uci_num = UCI[int(data_set)]
     print(uci_num)
-    X_train = np.genfromtxt("../UCI/imp_" + str(uci_num) + "_trainX.csv", delimiter=',')
-    X_test = np.genfromtxt("../UCI/imp_" + str(uci_num) + "_testX.csv", delimiter=',')
-    y_train = np.genfromtxt("../UCI/" + str(uci_num) + "_trainY.csv", delimiter=',')
-    y_test = np.genfromtxt("../UCI/" + str(uci_num) + "_testY.csv", delimiter=',')
-    print(np.unique(y_test))
-    if y_train.min() ==1:
-        y_train = y_train - 1
-        y_test = y_test - 1
-    print("Training data shape:", X_train.shape)
-    print("Training data Std:", np.std(X_train, axis=0))
-    print("Training data Mean:", np.mean(X_train, axis=0))
-    num_features = X_train.shape[1]
+    X = np.genfromtxt("../UCI/" + str(uci_num) + "_X.csv", delimiter=',')
+    Y = np.genfromtxt("../UCI/" + str(uci_num) + "_Y.csv", delimiter=',')
+    
+    if Y.min() ==1:
+        Y = Y - 1
+    
+    num_features = X.shape[1]
 
+  X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=validation_size, random_state=0)
   X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=validation_size, random_state=seed)
+  scaler = preprocessing.StandardScaler().fit(X_train)
+  X_train = scaler.transform(X_train)
+  X_val = scaler.transform(X_val)
+  X_test = scaler.transform(X_test)
+  
   options = dict(dtype=dtype, reshape=reshape, num_features=num_features, seed=seed)
 
   train = _DataSet(X_train, y_train, **options )
