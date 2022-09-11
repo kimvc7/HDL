@@ -158,8 +158,8 @@ def produce_configs():
         :return: Creates all the configurations for hyperparameter tuning
         """
         gen_param = []
-        for batchsize in [32]:
-                for lr in [1e-3, 1e-2]:
+        for batchsize in [64]:
+                for lr in [1e-3, 1e-4]:
                         for l0 in [1e-6, 1e-8, 1e-10, 1e-12, 0]:
                                 for l2 in [0]:
                                         for drop_out in [1]:
@@ -167,8 +167,8 @@ def produce_configs():
                                                         for rho in [1e-5, 1e-4, 1e-3, 1e-2, 0]:
                                                                 for stab_ratio in [[0.9],[0.8], [0.7]]:
                                                                         gen_param.append((batchsize, lr, l2, drop_out, stable, l0, rho, stab_ratio))
-        for batchsize in [32]:
-                for lr in [1e-3, 1e-2]:
+        for batchsize in [64]:
+                for lr in [1e-3, 1e-4]:
                         for l0 in [1e-6, 1e-8, 1e-10, 1e-12, 0]:
                                 for l2 in [0]:
                                         for drop_out in [1]:
