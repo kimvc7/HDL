@@ -14,4 +14,4 @@
 source /etc/profile ;
 module load anaconda/2021a
 
-python train.py --train_size 1 --data_set mnist --network_type ALEX --exp_id ${SLURM_ARRAY_TASK_ID}
+python train.py --train_size 0.4 --data_set cifar --network_type ALEX --exp_id ${SLURM_ARRAY_TASK_ID}
