@@ -185,7 +185,7 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
     m = int(n*validation_size)
   
     X_train, X_left, y_train, y_left = train_test_split(X_train, y_train, test_size=(X_train.shape[0] - n), random_state=seed)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=n - m, random_state=seed)
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=m, random_state=seed)
     
   elif data_set == "mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
