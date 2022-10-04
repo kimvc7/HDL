@@ -193,7 +193,12 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
         X_train = X_train[:,:,:,np.newaxis]
         X_test = X_test[:,:,:,np.newaxis]
     num_features = X_train.shape[1]*X_train.shape[2]
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=validation_size, random_state=seed)
+    
+    n = int(X_train.shape[0]*training_size)
+    m = int(n*validation_size)
+  
+    X_train, X_left, y_train, y_left = train_test_split(X_train, y_train, test_size=(X_train.shape[0] - n), random_state=seed)
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=n - m, random_state=seed)
     
   else:
     uci_num = UCI[int(data_set)]
