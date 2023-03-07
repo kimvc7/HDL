@@ -37,10 +37,9 @@ args = parser.parse_args()
 
 
 # Set up training parameters
-seed, num_epochs, num_output_steps, num_summary_steps, num_check_steps, final_temp, num_rounds, rewind_epoch = read_config_train(config)
+seed, num_epochs, num_output_steps, num_summary_steps, num_check_steps, final_temp, num_rounds, rewind_epoch, data_shape_size = read_config_train(config)
 args, rho, is_stable, learning_rate, l0, l2, batch_range, stab_ratio_range, dropout, network_size, pool_size, network_path = read_train_args_hypertuning(args)
 data_set, train_size, val_size = read_data_args(args)
-data_shape_size = 4
 
 if l0 == 0:
         num_rounds = 1
