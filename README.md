@@ -1,24 +1,26 @@
 # Holistic Deep Learning
 
 This code corresponds to the paper Holistic Deep Learning: https://arxiv.org/abs/2110.15829
-by Dimitris Bertsimas, Léonard Boussioux, Kimberly Villalobos Carballo, Michael Linghzi Li, Alex Paskov, Ivan Paskov.
+by Dimitris Bertsimas, Kimberly Villalobos Carballo, Léonard Boussioux, Michael Linghzi Li, Alex Paskov, Ivan Paskov.
 
-There is much interest in deep learning to solve challenges that arise in applying neural network models in real-world environments. In particular, three areas have received considerable attention: adversarial robustness, parameter sparsity, and output stability. Despite numerous attempts on solving these problems independently, there is very little work addressing the challenges simultaneously. In this paper, we address this problem of constructing holistic deep learning models by proposing a novel formulation that solves these issues in combination. Real-world experiments on both tabular and MNIST dataset show that our formulation is able to simultaneously improve the accuracy, robustness, stability, and sparsity over traditional deep learning models among many others.
+There is much interest in deep learning to solve challenges that arise in applying neural network models in real-world environments. In particular, three areas have received considerable attention: adversarial robustness, parameter sparsity, and stability of train-validation splits. Despite numerous attempts on solving these problems independently, there is very little work addressing them simultaneously. This paper presents a novel holistic deep learning framework that simultaneously addresses these challenges. The proposed framework holistically improves accuracy, robustness, sparsity and stability over standard deep learning models, as demonstrated by extensive experiments on both tabular and vision data sets. The results are further validated by ablation experiments and SHAP value analysis, which reveal the interactions and trade-offs between the different evaluation metrics. To support practitioners in their efforts to apply our framework, we provide a prescriptive approach that offers recommendations for selecting an appropriate training loss function based on their specific objectives.
 
 # Introduction to the code
 
 To train a basic feed-forward neural network go to ```src``` and execute:
 
-```python3 train.py --batch_range 64 --network_size 256 128 --l2 1e-5 --data_set uci10 --train_size 0.8 --lr 3e-4 ```
+```python train.py --batch_range 64 --network_size 256 128 --l2 1e-5 --data_set cifar10 --train_size 0.8 --lr 3e-4 ```
+
+Valid data_set values include "mnist", "fashion_mnist", "cifar10" as well as  "1", ..., "44" corresponding to the UCI data sets described in the config file.
 
 To train a VGG3 network:
-```python3 train.py --data_set mnist --network_type VGG3```
+```python train.py --data_set mnist --network_type VGG3```
 
 Overall, one can replace VGG3 by pre-supported architectures, such as ALEX (AlexNet) or VGG16. You can develop your own network architecture and name it.
 
 To train a stable network, add: ```--is_stable``` and tune ```--stab_ratio_range 0.8```.
 
-E.g., ```python train.py --data_set uci10 --is_stable --stab_ratio_range 0.8```
+E.g., ```python train.py --data_set cifar10 --is_stable --stab_ratio_range 0.8```
 
 To train a robust neural network, add: ```-r 1e-3``` and tune the regularization value.
 
@@ -35,12 +37,9 @@ The folder ```utils``` contains:
 - ```utils_print.py```: contains the printing functions.
 - ```utils_model.py```: contains the loss functions and model dictionaries.
 - ```utils_init.py```: contains function to load the different arguments and launch a grid search.
-- ```utils_MLP_model.py```: contains initialization function for MLP models. Needs to be adapted for CNNs.
+- ```utils_model.py```: contains initialization function for the neural network models.
 - ```utils.py```: contains miscellaneous elements.
 
 You can modify parameters in the config file with the desired values.
 
 The documentation is in progress and will be updated regularly.
-
-
-
