@@ -19,6 +19,7 @@
   "final_temp": 200,
   "num_rounds": 5,
   "rewind_epoch": 2,
+  "data_shape_size":4,
 
   "_comment": "=====ADVERSARIAL EXAMPLES CONFIGURATION=====",
   "k": 40,
