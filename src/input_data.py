@@ -158,7 +158,7 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
       X_train, X_left, y_train, y_left = train_test_split(X_train, y_train, test_size=(X_train.shape[0] - n), random_state=seed)
   X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=m, random_state=seed)
 
-  if standardize:
+  if data_set in UCI:
       scaler = preprocessing.StandardScaler().fit(X_train)
       X_train = scaler.transform(X_train)
       X_val = scaler.transform(X_val)
