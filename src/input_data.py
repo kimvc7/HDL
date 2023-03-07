@@ -115,7 +115,7 @@ class _DataSet(object):
       end = self._index_in_epoch
       return self._images[start:end], self._labels[start:end]
 
-def load_data_set(training_size, validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32, standardize=False):
+def load_data_set(training_size, validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32):
   if data_set == "cifar10":
     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
     X_train = X_train.astype('float32')
