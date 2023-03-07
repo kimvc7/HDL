@@ -163,29 +163,19 @@ class _DataSet(object):
       return self._images[start:end], self._labels[start:end]
 
 
-def load_data_set(training_size, validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32):
+def load_data_set(training_size, validation_size, data_set, seed=None, reshape=True, dtype=dtypes.float32, standardize=False):
   if data_set == "cifar10":
     (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()
     X_train = X_train.astype('float32')
     X_test = X_test.astype('float32')
     num_features = X_train.shape[1] * X_train.shape[2] * X_train.shape[3]
 
-    n = int(X_train.shape[0]*training_size)
-    m = int(n*validation_size)
-
-    if training_size != 1:
-        X_train, X_left, y_train, y_left = train_test_split(X_train, y_train, test_size=(X_train.shape[0] - n), random_state=seed)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=m, random_state=seed)
-
   elif data_set == "fashion_mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.fashion_mnist.load_data()
+    if not reshape:
+        X_train = X_train[:,:,:,np.newaxis]
+        X_test = X_test[:,:,:,np.newaxis]
     num_features = X_train.shape[1]*X_train.shape[2]
-
-    n = int(X_train.shape[0]*training_size)
-    m = int(n*validation_size)
-
-    X_train, X_left, y_train, y_left = train_test_split(X_train, y_train, test_size=(X_train.shape[0] - n), random_state=seed)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=m, random_state=seed)
 
   elif data_set == "mnist":
     (X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()
@@ -194,30 +184,33 @@ def load_data_set(training_size, validation_size, data_set, seed=None, reshape=T
         X_test = X_test[:,:,:,np.newaxis]
     num_features = X_train.shape[1]*X_train.shape[2]
 
-    n = int(X_train.shape[0]*training_size)
-    m = int(n*validation_size)
-
-    X_train, X_left, y_train, y_left = train_test_split(X_train, y_train, test_size=(X_train.shape[0] - n), random_state=seed)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=m, random_state=seed)
-
-
   else:
+    assert int(data_set) in range(len(UCI)), "Unknown data set!"
     uci_num = UCI[int(data_set)]
-    print(uci_num)
     X = np.genfromtxt("../UCI/" + str(uci_num) + "_X.csv", delimiter=',')
     Y = np.genfromtxt("../UCI/" + str(uci_num) + "_Y.csv", delimiter=',')
 
-    if Y.min() ==1:
-        Y = Y - 1
-
+    K = len(np.unique((Y)))
+    labels = np.unique(Y)
+    dict_labels = {labels[k]:k for k in range(K)}
+    for k in range(Y.shape[0]):
+        Y[k] = dict_labels[Y[k]]
     num_features = X.shape[1]
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=validation_size, random_state=0)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=validation_size, random_state=seed)
-    scaler = preprocessing.StandardScaler().fit(X_train)
-    X_train = scaler.transform(X_train)
-    X_val = scaler.transform(X_val)
-    X_test = scaler.transform(X_test)
+
+  n = int(X_train.shape[0]*training_size)
+  m = int(n*validation_size)
+
+  if training_size != 1:
+      X_train, X_left, y_train, y_left = train_test_split(X_train, y_train, test_size=(X_train.shape[0] - n), random_state=seed)
+  X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=m, random_state=seed)
+
+  if standardize:
+      scaler = preprocessing.StandardScaler().fit(X_train)
+      X_train = scaler.transform(X_train)
+      X_val = scaler.transform(X_val)
+      X_test = scaler.transform(X_test)
 
   options = dict(dtype=dtype, reshape=reshape, num_features=num_features, seed=seed)
 
