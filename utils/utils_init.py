@@ -73,7 +73,7 @@ def read_config_train(config):
 	final_temp = config['final_temp']
 	num_rounds = config['num_rounds']
 	rewind_epoch = config['rewind_epoch']
-	data_shape_size = config['data_shape_size]
+	data_shape_size = config['data_shape_size']
 
 	return seed, num_epochs, num_output_steps, num_summ_steps, num_check_steps, final_temp, num_rounds, rewind_epoch, data_shape_size
 

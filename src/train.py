@@ -183,13 +183,8 @@ for batch_size, subset_ratio in itertools.product(batch_range, stab_ratio_range)
                                           
                                                 # Track best validation accuracy
                                                 val_acc = sess.run(model.accuracy, feed_dict=val_dict)
-                                                if l0 >0:
-                                                        print("W1mask sum is: ", np.sum(sess.run(model.W1_masked, feed_dict=val_dict)))
-                                                print("theta: ", np.sum(sess.run(model.theta, feed_dict=val_dict)))
-                                                print("W1 sum is: ", np.sum(sess.run(model.W1, feed_dict=val_dict)))
 
                                                 if val_acc >= best_val_acc and (round_ == num_rounds-1):
-                                                        print("best")
                                                         best_val_acc = val_acc
                                                         # Update best results
                                                         dict_exp = utils_model.update_dict(dict_exp, args, sess, model, test_dict, experiment, train_step)
