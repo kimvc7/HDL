@@ -19,7 +19,7 @@ VGG3_POOL = (True, True, False)
 VGG7 = ((3, 3, 32), (3, 3, 32), (3, 3, 64), (3, 3, 64), (3, 3, 128), (3, 3, 128), (128,))
 VGG7_POOL = (False, True, False, True, False, True, False)
 
-MLP = (64, 64)
+MLP = (128, 128)
 MLP_POOL = (False, False)
 
 
