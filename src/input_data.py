@@ -54,8 +54,7 @@ UCI = ['ozone-level-detection-eight',
  'cnae-9',
  'ionosphere',
  'image-segmentation',
- 'poker-hand',
- 'arrhythmia']
+ 'poker-hand']
 
 
 _Datasets = collections.namedtuple('_Datasets', ['train', 'validation', 'test'])
