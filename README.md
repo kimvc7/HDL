@@ -7,7 +7,7 @@ This paper presents a novel holistic deep learning framework that simultaneously
 
 # Introduction to the code
 
-To train a basic feed-forward neural network go to ```src``` and execute for instance:
+To train an Alex-Net neural network go to ```src``` and execute for instance:
 
 ```python train.py --data_set cifar10 --network_type ALEX```
 
