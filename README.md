@@ -7,9 +7,9 @@ This paper presents a novel holistic deep learning framework that simultaneously
 
 # Introduction to the code
 
-To train a basic feed-forward neural network go to ```src``` and execute:
+To train a basic feed-forward neural network go to ```src``` and execute for instance:
 
-```python train.py --batch_range 64 --network_size 256 128 --l2 1e-5 --data_set cifar10 --train_size 0.8 --lr 3e-4 ```
+```python train.py --data_set cifar10 --network_type ALEX```
 
 Valid data_set values include "mnist", "fashion_mnist", "cifar10" as well as  "1", ..., "44" corresponding to the UCI data sets described in the config file.
 
